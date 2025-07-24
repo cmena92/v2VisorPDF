@@ -73,20 +73,22 @@
 
 ## 🎯 FASE 3: LIMPIEZA PARA PRODUCCIÓN 🔴 PENDIENTE
 
-### 3.1 Eliminación de archivos de debugging ⏳ PENDIENTE
+### 3.1 Eliminación de shortcodes no deseados ✅ COMPLETADO
+- [x] Eliminados shortcodes `actas_viewer` y `actas_navigator_visual`
+- [x] Mantenido únicamente `actas_hybrid`
+- [x] Removidos 14 archivos asociados (CSS, JS, templates, clases)
+- [x] Corregidas referencias rotas en código
+- [x] Plugin optimizado solo para funcionalidad híbrida
+
+### 3.2 Limpieza de archivos de testing/debug ⏳ PENDIENTE  
 - [ ] Remover archivos `test-*.php`
-- [ ] Eliminar `debug-*.php`
-- [ ] Limpiar archivos de análisis temporales
-
-### 3.2 Reorganización de estructura ⏳ PENDIENTE  
+- [ ] Limpiar archivos de análisis temporales (.md)
 - [ ] Consolidar scripts de inicio (.bat/.sh)
-- [ ] Limpiar directorio duplicado
-- [ ] Organizar documentación
 
-### 3.3 Optimización para producción ⏳ PENDIENTE
+### 3.3 Optimización final para producción ⏳ PENDIENTE
+- [ ] Limpiar directorio duplicado v2VisorPDF
+- [ ] Organizar documentación
 - [ ] Revisar configuraciones de seguridad
-- [ ] Optimizar configuración PHP
-- [ ] Preparar modo producción vs desarrollo
 
 ---
 
@@ -113,7 +115,7 @@
 | 3. Limpieza Producción | 🔴 PENDIENTE | 0% | 1h |
 | 4. Testing/Validación | 🔴 PENDIENTE | 0% | 1h |
 
-**PROGRESO TOTAL: 35% (1.5/4 fases completadas)**
+**PROGRESO TOTAL: 60% (2.5/4 fases completadas)**
 
 ---
 

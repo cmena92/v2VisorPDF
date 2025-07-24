@@ -66,9 +66,7 @@ class VisorPDFCrisman {
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_scripts'));
         add_action('admin_menu', array($this, 'admin_menu'));
         
-        // Shortcodes
-        add_shortcode('actas_viewer', array($this, 'shortcode_actas_viewer'));
-        add_shortcode('actas_navigator_visual', array($this, 'shortcode_visual_navigator'));
+        // Shortcodes - SOLO HÍBRIDO
         add_shortcode('actas_hybrid', array($this, 'shortcode_actas_hybrid'));
         
         // AJAX para funcionalidad base (visor)
@@ -116,7 +114,7 @@ class VisorPDFCrisman {
         require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-visor-core.php';
         require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-folders-manager.php';
         require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-mass-upload.php';
-        require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-frontend-navigation.php';
+        // require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-frontend-navigation.php'; // ELIMINADO
         require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-analytics.php';
     }
     
@@ -133,8 +131,7 @@ class VisorPDFCrisman {
             $this->analytics = new Visor_PDF_Analytics();
         }
         
-        // Navegación frontend disponible siempre
-        $this->frontend_navigation = new Visor_PDF_Frontend_Navigation();
+        // Navegación frontend - ELIMINADO - Solo híbrido disponible
     }
     
     /**
@@ -379,7 +376,7 @@ class VisorPDFCrisman {
     }
     
     public function debug_navegador_page() {
-        include VISOR_PDF_CRISMAN_PLUGIN_DIR . 'debug-navigator.php';
+        echo '<div class="notice notice-error"><p>Debug de navegador eliminado - Solo disponible shortcode híbrido</p></div>';
     }
     
     /**
@@ -393,9 +390,7 @@ class VisorPDFCrisman {
         $load_scripts = false;
         
         if (is_singular() && $post) {
-            if (has_shortcode($post->post_content, 'actas_viewer') || 
-                has_shortcode($post->post_content, 'actas_hybrid') ||
-                has_shortcode($post->post_content, 'actas_navigator_visual')) {
+            if (has_shortcode($post->post_content, 'actas_hybrid')) {
                 $load_scripts = true;
             }
         }
@@ -1056,7 +1051,7 @@ class VisorPDFCrisman {
             return $plugin_template;
         }
         
-        return VISOR_PDF_CRISMAN_PLUGIN_DIR . 'templates/viewer.php';
+        return VISOR_PDF_CRISMAN_PLUGIN_DIR . 'templates/viewer-hybrid.php'; // FALLBACK AL HÍBRIDO
     }
     
     private function render_acta_card($acta) {
