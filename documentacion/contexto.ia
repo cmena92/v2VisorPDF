@@ -1,0 +1,399 @@
+# CONTEXTO TÉCNICO Y FUNCIONAL - VISOR PDF CRISMAN
+
+## INFORMACIÓN GENERAL DEL PROYECTO
+
+**Nombre del Sistema:** Visor PDF Crisman  
+**Tipo de Proyecto:** Plugin WordPress  
+**Versión:** 2.0.0  
+**Autor:** Crisman  
+**Fecha de Desarrollo:** Diciembre 2024 - Julio 2025  
+**Estado:** FASE 5B COMPLETADA - Dashboard de Analytics Funcional  
+
+## RESUMEN EJECUTIVO
+
+Sistema desarrollado para gestionar, visualizar y controlar acceso a documentos PDF (específicamente actas) con alta seguridad, marcas de agua personalizadas y sistema completo de auditoría. El sistema impide la descarga directa de documentos y registra todas las actividades de visualización.
+
+**ÚLTIMO ESTADO:** Completado dashboard visual de analytics con estadísticas en tiempo real, métricas generales, rankings, distribución por dispositivos y widget integrado en WordPress.
+
+## ARQUITECTURA DEL SISTEMA
+
+### Estructura de Archivos
+```
+visor_pdf_crisman/
+├── visor-pdf-crisman.php          # Archivo principal del plugin
+├── README.md                      # Documentación de usuario
+├── documentacion/
+│   └── contexto.ia               # Este archivo de contexto
+├── assets/
+│   ├── visor-pdf.js              # JavaScript del visor (funcionalidad frontend)
+│   └── visor-pdf.css             # Estilos CSS (interfaz y responsividad)
+├── includes/
+│   ├── install-utils.php         # Utilidades de instalación y verificación
+│   └── security-config.php       # Configuraciones avanzadas de seguridad
+└── templates/
+    ├── admin-list.php            # Interfaz de administración - lista de actas
+    ├── admin-upload.php          # Interfaz de administración - subida de archivos
+    ├── admin-logs.php            # Interfaz de administración - logs de auditoría
+    └── viewer.php                # Visor frontend para usuarios finales
+```
+
+### Tecnologías Utilizadas
+- **Backend:** PHP 7.4+, WordPress 5.0+
+- **Frontend:** JavaScript (ES6+), jQuery, CSS3
+- **Base de Datos:** MySQL 5.7+ (usando $wpdb de WordPress)
+- **Procesamiento PDF:** Imagick PHP Extension
+- **Seguridad:** Headers HTTP, protecciones CSS/JS, ofuscación
+- **UI/UX:** CSS Grid, Flexbox, Modal responsivo
+
+## FUNCIONALIDADES PRINCIPALES
+
+### 1. GESTIÓN DE DOCUMENTOS
+- **Subida de PDFs:** Solo administradores pueden subir archivos PDF
+- **Metadatos:** Título, descripción, fecha de subida, usuario que subió
+- **Validación:** Solo acepta archivos PDF, límites de tamaño configurables
+- **Almacenamiento Seguro:** Archivos guardados en carpeta protegida con .htaccess
+- **Nomenclatura Única:** Nombres de archivo con uniqid() para evitar conflictos
+
+### 2. VISUALIZACIÓN SEGURA
+- **Conversión a Imágenes:** PDFs convertidos a PNG usando Imagick
+- **Página por Página:** Carga individual de cada página
+- **Marcas de Agua:** Número de colegiado + timestamp en cada página
+- **Sin Descarga Directa:** URLs no accesibles, imágenes temporales
+- **Controles de Navegación:** Anterior/Siguiente, ir a página específica
+- **Controles de Zoom:** 50% a 300%, botón ajustar automático
+
+### 3. SISTEMA DE SEGURIDAD
+- **Autenticación:** Solo usuarios logueados
+- **Autorización:** Verificación de número de colegiado
+- **Protecciones Frontend:**
+  - Bloqueo de herramientas de desarrollador (F12, DevTools)
+  - Deshabilitación de clic derecho, selección de texto, drag & drop
+  - Protección contra print screen y capturas
+  - Detección de cambio de ventana/pestaña
+  - Ofuscación de console.log
+- **Protecciones Backend:**
+  - Headers de seguridad HTTP
+  - Archivos .htaccess para denegar acceso directo
+  - Validación de nonces en todas las peticiones AJAX
+
+### 4. AUDITORÍA Y LOGS
+- **Registro de Visualizaciones:** Cada página vista se registra con:
+  - Usuario y número de colegiado
+  - Archivo y página visualizada
+  - Timestamp, IP, User Agent
+- **Actividades Sospechosas:** Registro de:
+  - Intentos de uso de DevTools
+  - Cambios de ventana durante visualización
+  - Intentos de print screen
+  - Sesiones concurrentes
+- **Dashboard de Estadísticas:** Total visualizaciones, usuarios únicos, actas más vistas
+
+## CONFIGURACIÓN TÉCNICA
+
+### Requisitos del Sistema
+- **WordPress:** 5.0 o superior
+- **PHP:** 7.4 o superior con extensión Imagick
+- **MySQL:** 5.7 o superior
+- **Memoria PHP:** Mínimo 256MB (recomendado 512MB)
+- **Permisos:** Escritura en wp-content/uploads/
+
+### Tablas de Base de Datos
+1. **wp_actas_metadata:** Metadatos de las actas
+2. **wp_actas_logs:** Logs de visualización
+3. **wp_actas_suspicious_logs:** Registros de actividades sospechosas
+
+### Configuración de Imagick
+- **Resolución:** 200 DPI para calidad óptima
+- **Formato de Salida:** PNG para compatibilidad
+- **Procesamiento:** Página por página bajo demanda
+- **Marca de Agua:** Múltiples capas con número de colegiado
+
+## FLUJO DE TRABAJO DEL SISTEMA
+
+### Proceso de Subida de Actas
+1. Administrador accede a "Visor PDF → Subir Actas"
+2. Completa formulario (título, descripción, archivo PDF)
+3. Sistema valida archivo (tipo, tamaño)
+4. Genera nombre único y mueve archivo a carpeta protegida
+5. Extrae número de páginas usando Imagick
+6. Guarda metadatos en base de datos
+7. Confirma subida exitosa
+
+### Proceso de Visualización
+1. Usuario logueado visita página con shortcode `[actas_viewer]`
+2. Sistema verifica autenticación y número de colegiado
+3. Muestra lista de actas disponibles
+4. Usuario hace clic en "Ver Acta"
+5. Se abre modal con visor PDF
+6. JavaScript solicita página vía AJAX
+7. PHP procesa PDF con Imagick, agrega marcas de agua
+8. Retorna imagen PNG temporal
+9. JavaScript muestra imagen y registra visualización
+10. Sistema limpia recursos temporales
+
+### Proceso de Navegación
+1. Usuario usa controles de navegación (anterior/siguiente/ir a página)
+2. JavaScript valida límites de páginas
+3. Solicita nueva página vía AJAX
+4. Repite proceso de generación de imagen con marcas de agua
+5. Actualiza vista y registra nueva visualización
+
+## MEDIDAS DE SEGURIDAD IMPLEMENTADAS
+
+### Nivel de Archivo
+- **Carpeta Protegida:** .htaccess que niega acceso directo
+- **Nombres Únicos:** uniqid() + sanitización para evitar conflictos
+- **Validación de Tipos:** Solo acepta application/pdf
+
+### Nivel de Aplicación
+- **Nonces:** Validación en todas las peticiones AJAX
+- **Sanitización:** Todos los inputs sanitizados
+- **Verificación de Permisos:** Checks de usuario en cada acción
+- **Rate Limiting:** Prevención de abuso mediante logs
+
+### Nivel de Interfaz
+- **CSS Protections:** Deshabilitación de selección, drag & drop
+- **JavaScript Hooks:** Detección y bloqueo de herramientas de desarrollador
+- **Event Blocking:** Prevención de atajos de teclado peligrosos
+- **URL Ofuscation:** URLs de imágenes temporales que se auto-destruyen
+
+### Nivel de Red
+- **Headers HTTP:** X-Frame-Options, X-Content-Type-Options, etc.
+- **Referrer Policy:** Control de información de referencia
+- **HTTPS Ready:** Compatible con conexiones seguras
+
+## PERSONALIZACIÓN Y EXTENSIBILIDAD
+
+### Hooks Disponibles
+```php
+// Antes de mostrar una acta
+do_action('actas_before_display', $acta_id, $user_id);
+
+// Después de cargar una página
+do_action('actas_page_loaded', $acta_id, $page_num, $user_id);
+
+// Al detectar actividad sospechosa
+do_action('actas_suspicious_activity', $activity_type, $user_id);
+```
+
+### Filtros Disponibles
+```php
+// Modificar configuración de Imagick
+$config = apply_filters('actas_imagick_config', $default_config);
+
+// Personalizar texto de marca de agua
+$watermark_text = apply_filters('actas_watermark_text', $default_text, $numero_colegiado);
+```
+
+### Shortcode
+```php
+[actas_viewer]                    // Básico
+[actas_viewer limite="5"]         // Limitar resultados
+[actas_viewer categoria="tipo"]   // Filtrar por categoría (funcionalidad futura)
+```
+
+## RESOLUCIÓN DE PROBLEMAS COMUNES
+
+### Error: Imagick no disponible
+- Instalar php-imagick en el servidor
+- Verificar que soporte PDF: `$imagick->queryFormats('PDF')`
+- Reiniciar servidor web después de instalación
+
+### Error: Permisos de archivo
+- Verificar permisos de wp-content/uploads/
+- Configurar propietario correcto (www-data en Linux)
+- Asegurar que .htaccess se cree correctamente
+
+### Error: Memoria insuficiente
+- Aumentar memory_limit en php.ini (mínimo 512M)
+- Ajustar max_execution_time para PDFs grandes
+- Optimizar resolución de Imagick si es necesario
+
+### Error: Scroll no funciona
+- Verificar que pointer-events: auto esté en .pdf-page-display
+- Revisar que overflow: auto esté configurado
+- Confirmar que protecciones CSS no bloqueen eventos
+
+## MÉTRICAS Y MONITOREO
+
+### Dashboard de Administración
+- **Total Visualizaciones:** Contador global de páginas vistas
+- **Usuarios Únicos:** Número de usuarios diferentes que han accedido
+- **Actas Más Vistas:** Ranking de documentos más consultados
+- **Actividades Sospechosas:** Alertas de comportamientos anómalos
+
+### Logs Detallados
+- **Visualizaciones:** Usuario, documento, página, timestamp, IP, navegador
+- **Actividades Sospechosas:** Tipo de actividad, contexto, frecuencia
+- **Rendimiento:** Tiempos de carga, errores de procesamiento
+
+## OPTIMIZACIONES DE RENDIMIENTO
+
+### Frontend
+- **Lazy Loading:** Páginas se cargan bajo demanda
+- **Memory Management:** URLs de blob se limpian automáticamente
+- **Zoom Inteligente:** Transform CSS en lugar de re-renderizado
+- **Caché de Imágenes:** Reutilización temporal durante navegación
+
+### Backend
+- **Procesamiento Eficiente:** Imagick optimizado para resolución adecuada
+- **Limpieza Automática:** Archivos temporales se eliminan después de uso
+- **Base de Datos Optimizada:** Índices en columnas de búsqueda frecuente
+- **Consultas Eficientes:** Prepared statements y límites apropiados
+
+## FUTURAS MEJORAS SUGERIDAS
+
+### Funcionalidades
+- **Sistema de Categorías:** Organización temática de actas
+- **Búsqueda de Contenido:** OCR para buscar texto dentro de PDFs
+- **Comentarios y Anotaciones:** Sistema colaborativo de notas
+- **Notificaciones:** Alertas de nuevas actas disponibles
+- **API REST:** Exposición de datos para integraciones externas
+
+### Seguridad
+- **2FA:** Autenticación de dos factores para usuarios sensibles
+- **Watermark Dinámico:** Marcas de agua que cambien con el tiempo
+- **Geolocalización:** Restricciones basadas en ubicación
+- **Session Management:** Control más granular de sesiones
+
+### Experiencia de Usuario
+- **Vista Previa:** Thumbnails de páginas para navegación rápida
+- **Modo Presentación:** Vista de pantalla completa
+- **Favoritos:** Sistema de marcado de actas importantes
+- **Historial de Lectura:** Seguimiento de progreso por documento
+
+## CONSIDERACIONES DE DESPLIEGUE
+
+### Ambiente de Producción
+- **HTTPS Obligatorio:** Para proteger transmisión de datos
+- **Backup Regular:** Especialmente de la carpeta de actas y base de datos
+- **Monitoreo de Recursos:** CPU y memoria durante procesamiento de PDFs
+- **Logs de Seguridad:** Integración con sistemas de monitoreo existentes
+
+### Escalabilidad
+- **CDN:** Para servir assets estáticos del plugin
+- **Cache de Objetos:** Para consultas de base de datos frecuentes
+- **Queue System:** Para procesamiento asíncrono de PDFs grandes
+- **Load Balancing:** Consideraciones para múltiples servidores
+
+## ARQUITECTURA DE CÓDIGO
+
+### Patrón de Diseño
+- **Singleton Pattern:** Clase principal del plugin
+- **Factory Pattern:** Generación de imágenes con marcas de agua
+- **Observer Pattern:** Sistema de hooks y filtros de WordPress
+- **Strategy Pattern:** Diferentes métodos de autenticación/autorización
+
+### Principios SOLID Aplicados
+- **Single Responsibility:** Cada clase/función tiene una responsabilidad específica
+- **Open/Closed:** Extensible vía hooks sin modificar código core
+- **Liskov Substitution:** Interfaces consistentes para diferentes componentes
+- **Interface Segregation:** Separación clara entre frontend y backend
+- **Dependency Inversion:** Dependencias inyectadas vía WordPress APIs
+
+## TESTING Y CALIDAD
+
+### Pruebas Realizadas
+- **Funcionalidad Core:** Subida, visualización, navegación, zoom
+- **Seguridad:** Intentos de acceso directo, bypass de controles
+- **Compatibilidad:** Diferentes navegadores y dispositivos
+- **Rendimiento:** PDFs de diferentes tamaños y número de páginas
+- **Edge Cases:** Usuarios sin número de colegiado, archivos corruptos
+
+### Calidad de Código
+- **Estándares WordPress:** Seguimiento de WordPress Coding Standards
+- **Documentación:** Comentarios inline y documentación de funciones
+- **Sanitización:** Todos los inputs sanitizados apropiadamente
+- **Validación:** Verificación de datos en frontend y backend
+- **Error Handling:** Manejo graceful de errores y excepciones
+
+## MANTENIMIENTO Y SOPORTE
+
+### Rutinas de Mantenimiento
+- **Limpieza de Logs:** Rotación automática de logs antiguos
+- **Optimización DB:** Limpieza de metadatos huérfanos
+- **Actualización de Dependencias:** Verificación periódica de Imagick
+- **Backup de Configuración:** Respaldo de settings críticos
+
+### Documentación para Desarrolladores
+- **Código Comentado:** Explicaciones inline de lógica compleja
+- **README Técnico:** Instrucciones de instalación y configuración
+- **Changelog:** Registro de cambios y versiones
+- **API Documentation:** Descripción de hooks, filtros y funciones públicas
+
+---
+
+## HISTORIAL DE DESARROLLO COMPLETADO
+
+### ✅ FASE 1: MVP BASE (Completada)
+- Sistema base de visualización segura
+- Subida individual de PDFs
+- Marcas de agua dinámicas
+- Sistema de logs y auditoría
+- Protecciones de seguridad frontend/backend
+
+### ✅ FASE 2: SISTEMA DE CARPETAS (Completada)
+- Gestión jerárquica de carpetas
+- CRUD completo con AJAX
+- Migración automática de datos
+- Reasignación masiva de actas
+- Interfaz administrativa avanzada
+
+### ✅ FASE 3: SUBIDA MASIVA (Completada)
+- Interfaz drag & drop moderna
+- Procesamiento hasta 20 PDFs simultáneos
+- Sistema de progreso en tiempo real
+- Validaciones robustas frontend/backend
+- Integración completa con sistema de carpetas
+
+### ✅ FASE 4: NAVEGACIÓN FRONTEND (Completada - Julio 2025)
+- Explorador de carpetas intuitivo para usuarios finales
+- Sistema de breadcrumb dinámico y clickeable
+- Búsqueda global inteligente en tiempo real
+- Filtros avanzados combinables (fecha, páginas, orden)
+- Shortcode extendido [actas_navigator] con parámetros
+- Experiencia responsive y accesible completa
+
+### ✅ FASE 5A: BASE DE ANALYTICS (Completada - Julio 2025)
+- Infraestructura base para analytics avanzados
+- Tracking extendido con dispositivo, navegador, sesión
+- Sistema de cache inteligente con transients
+- Estadísticas generales y en tiempo real
+- Endpoints AJAX para datos de analytics
+- Nuevas columnas optimizadas en base de datos
+
+### ✅ FASE 5B: DASHBOARD BÁSICO (Completada - Julio 2025)
+- Dashboard visual completo con estadísticas en tiempo real
+- Interfaz moderna responsive con cards y gráficos CSS
+- Rankings de actas más vistas y usuarios más activos
+- Distribución por dispositivos con gráfico de barras
+- Widget integrado en dashboard principal de WordPress
+- Botones de acción y auto-refresh cada 5 minutos
+
+### 🔄 REFACTORIZACIÓN MODULAR (Completada)
+- Arquitectura modular con clases separadas
+- JavaScript organizado en módulos ES6
+- Separación clara de responsabilidades
+- Optimización de carga de recursos
+- Preparación para escalabilidad futura
+
+---
+
+**NOTA IMPORTANTE PARA IAs/LLMs:****
+
+Este contexto representa un sistema completamente funcional y probado. Al trabajar con este código:
+
+1. **Respetar la Arquitectura:** El sistema tiene una estructura específica que funciona
+2. **Mantener Seguridad:** Las protecciones implementadas son críticas y no deben removerse
+3. **Considerar Dependencias:** Imagick es requerido, verificar antes de hacer cambios
+4. **Entender el Flujo:** El proceso de conversión PDF→PNG→Marcas de agua es el core del sistema
+5. **Preservar Logs:** El sistema de auditoría es fundamental para el negocio
+6. **Responsive:** El diseño debe mantenerse funcional en todos los dispositivos
+
+El sistema está optimizado para equilibrar seguridad máxima con experiencia de usuario fluida y capacidades de navegación avanzada. Cualquier modificación debe considerar estos aspectos fundamentales.
+
+---
+
+**Fecha de Última Actualización:** 11 de Julio, 2025  
+**Próxima Fase Planificada:** Fase 5 - Analytics Avanzados  
+**Estado del Proyecto:** ✅ PRODUCCIÓN - COMPLETAMENTE FUNCIONAL CON NAVEGACIÓN FRONTEND

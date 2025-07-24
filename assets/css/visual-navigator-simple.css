@@ -1,0 +1,704 @@
+/**
+ * Estilos CSS Simplificados para Navegador Visual
+ * Solo selector de carpetas, sin filtros adicionales
+ */
+
+/* Variables CSS */
+:root {
+    --primary-color: #0073aa;
+    --primary-hover: #005a87;
+    --secondary-color: #f1f1f1;
+    --success-color: #46b450;
+    --warning-color: #ffb900;
+    --error-color: #dc3232;
+    --text-color: #444;
+    --text-light: #666;
+    --border-color: #ddd;
+    --border-radius: 6px;
+    --shadow: 0 2px 8px rgba(0,0,0,0.1);
+    --transition: all 0.3s ease;
+}
+
+/* Contenedor Principal Simplificado */
+.visual-navigator-wrapper {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+}
+
+/* Sección de Selector de Carpetas */
+.visual-nav-filters {
+    background: #f9f9f9;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.folder-selector-section {
+    text-align: center;
+}
+
+.filter-section-title {
+    margin: 0 0 15px 0;
+    color: var(--primary-color);
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.filter-section-title .dashicons {
+    font-size: 20px;
+}
+
+/* Dropdown Jerárquico - Versión Simplificada y Mejorada */
+.folder-dropdown-container {
+    position: relative;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.folder-dropdown {
+    width: 100%;
+    padding: 15px 20px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 16px;
+    background-color: #fff;
+    transition: var(--transition);
+    cursor: pointer;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.folder-dropdown:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 115, 170, 0.1), 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.folder-dropdown:hover {
+    border-color: var(--primary-hover);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* Optgroups - Carpetas con Subcarpetas */
+.folder-dropdown optgroup {
+    font-weight: bold;
+    color: var(--primary-color);
+    background-color: #f0f6fc;
+    border-top: 2px solid #e1e8ed;
+    padding: 8px 0;
+    margin-top: 4px;
+}
+
+.folder-dropdown optgroup:first-child {
+    border-top: none;
+    margin-top: 0;
+}
+
+/* Opciones de carpetas padre */
+.folder-dropdown option[data-is-parent="true"] {
+    font-weight: 600;
+    color: var(--primary-color);
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 8px 0;
+}
+
+/* Opciones de subcarpetas */
+.folder-dropdown option[data-parent] {
+    color: var(--text-light);
+    background-color: #fafafa;
+    font-style: normal;
+    padding-left: 20px;
+}
+
+/* Opción "Todas las actas" */
+.folder-dropdown option[value="0"] {
+    font-weight: 600;
+    color: var(--primary-color);
+    background-color: #f0f6fc;
+    border-bottom: 2px solid var(--primary-color);
+    padding: 8px 0;
+}
+
+/* Estados hover y selected */
+.folder-dropdown option:hover {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+.folder-dropdown option:checked,
+.folder-dropdown option:selected {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Header con título y breadcrumbs */
+.nav-header {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.actas-title {
+    margin: 0 0 15px 0;
+    color: var(--text-color);
+    font-size: 24px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.actas-title .dashicons {
+    font-size: 26px;
+    color: var(--primary-color);
+}
+
+/* Breadcrumbs simplificados */
+.breadcrumb-nav {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.breadcrumb-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    transition: var(--transition);
+    font-size: 14px;
+    display: inline-block;
+}
+
+.breadcrumb-link:hover {
+    background-color: var(--primary-color);
+    color: white;
+    text-decoration: none;
+}
+
+.breadcrumb-current {
+    color: var(--text-color);
+    font-weight: 600;
+    padding: 6px 12px;
+    background-color: var(--secondary-color);
+    border-radius: 4px;
+    font-size: 14px;
+    display: inline-block;
+}
+
+.breadcrumb-separator {
+    margin: 0 8px;
+    color: var(--text-light);
+}
+
+.breadcrumb-separator .dashicons {
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+/* Estados de carga y resultados */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loading-spinner {
+    text-align: center;
+    font-size: 18px;
+    color: var(--primary-color);
+}
+
+.loading-spinner .dashicons {
+    font-size: 32px;
+    animation: spin 1s linear infinite;
+}
+
+/* Información de resultados */
+.results-info {
+    background: #f0f6fc;
+    border: 1px solid #b8daff;
+    border-radius: var(--border-radius);
+    padding: 15px;
+    margin-bottom: 20px;
+    text-align: center;
+    color: var(--text-color);
+}
+
+#results-count {
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--primary-color);
+}
+
+/* Grid de actas */
+.actas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.acta-card {
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.acta-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+}
+
+.acta-card-header {
+    margin-bottom: 15px;
+}
+
+.acta-title {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-color);
+    line-height: 1.4;
+}
+
+.acta-folder {
+    font-size: 12px;
+    color: var(--text-light);
+    background: var(--secondary-color);
+    padding: 4px 8px;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+.acta-description {
+    color: var(--text-light);
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 15px;
+}
+
+.acta-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-light);
+}
+
+.acta-date,
+.acta-pages {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.acta-meta .dashicons {
+    font-size: 14px;
+}
+
+/* Sin resultados */
+.no-results-message {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-light);
+}
+
+.no-results-content {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.no-results-content .dashicons {
+    font-size: 48px;
+    color: var(--text-light);
+    margin-bottom: 20px;
+}
+
+.no-results-content h3 {
+    margin: 0 0 10px 0;
+    color: var(--text-color);
+}
+
+.no-results-content p {
+    margin: 0 0 20px 0;
+}
+
+.btn-clear-filters {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 14px;
+    transition: var(--transition);
+}
+
+.btn-clear-filters:hover {
+    background: var(--primary-hover);
+}
+
+/* Paginación */
+.pagination-wrapper {
+    text-align: center;
+    padding: 20px 0;
+    border-top: 1px solid var(--border-color);
+}
+
+.pagination-btn {
+    background: #fff;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 8px 16px;
+    margin: 0 2px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: var(--transition);
+}
+
+.pagination-btn:hover:not(.disabled):not(.active) {
+    background: var(--secondary-color);
+    border-color: var(--primary-color);
+}
+
+.pagination-btn.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.pagination-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-ellipsis {
+    padding: 8px 4px;
+    color: var(--text-light);
+}
+
+/* Animaciones */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.actas-grid {
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .visual-navigator-wrapper {
+        padding: 15px;
+        margin: 10px;
+    }
+    
+    .folder-dropdown {
+        font-size: 16px; /* Evita zoom en iOS */
+        padding: 12px 16px;
+    }
+    
+    .filter-section-title {
+        font-size: 16px;
+    }
+    
+    .actas-title {
+        font-size: 20px;
+    }
+    
+    .actas-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .acta-card {
+        padding: 15px;
+    }
+    
+    .acta-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .breadcrumb-nav {
+        font-size: 12px;
+    }
+    
+    .breadcrumb-link,
+    .breadcrumb-current {
+        padding: 4px 8px;
+        font-size: 12px;
+    }
+    
+    .pagination-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+        margin: 0 1px;
+    }
+}
+
+@media (max-width: 480px) {
+    .visual-navigator-wrapper {
+        padding: 10px;
+        margin: 5px;
+    }
+    
+    .visual-nav-filters {
+        padding: 15px;
+    }
+    
+    .folder-dropdown-container {
+        max-width: 100%;
+    }
+    
+    .acta-title {
+        font-size: 14px;
+    }
+    
+    .acta-description {
+        font-size: 13px;
+    }
+}
+
+/* Acciones de las tarjetas de actas */
+.acta-actions {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.btn-ver-acta {
+    background: var(--primary-color) !important;
+    color: white !important;
+    border: none !important;
+    padding: 10px 20px !important;
+    border-radius: var(--border-radius) !important;
+    cursor: pointer !important;
+    font-size: 14px !important;
+    width: 100% !important;
+    transition: var(--transition) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+}
+
+.btn-ver-acta:hover {
+    background: var(--primary-hover) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(0, 115, 170, 0.3) !important;
+}
+
+.btn-ver-acta:active {
+    transform: translateY(0) !important;
+}
+
+.btn-ver-acta .dashicons {
+    font-size: 16px !important;
+    width: 16px !important;
+    height: 16px !important;
+}
+
+/* Modal del visor PDF mejorado */
+.pdf-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.pdf-modal-content {
+    background: white;
+    border-radius: 8px;
+    width: 100%;
+    height: 100%;
+    max-width: 1200px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.pdf-modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f9f9f9;
+}
+
+.pdf-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 5px;
+    line-height: 1;
+    color: #666;
+    transition: color 0.3s ease;
+}
+
+.pdf-modal-close:hover {
+    color: #dc3232;
+}
+
+.pdf-modal-body {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Animación de spin para iconos de carga */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Modo oscuro */
+@media (prefers-color-scheme: dark) {
+    .acta-actions {
+        background: transparent;
+    }
+    
+    .btn-ver-acta {
+        background: var(--primary-color) !important;
+        color: white !important;
+    }
+    
+    .btn-ver-acta:hover {
+        background: var(--primary-hover) !important;
+    }
+    
+    .pdf-modal-content {
+        background: #1a1a1a;
+        color: var(--text-color);
+    }
+    
+    .pdf-modal-header {
+        background: #2c2c2c;
+        border-color: var(--border-color);
+    }
+    
+    .pdf-modal-close {
+        color: var(--text-light);
+    }
+    
+    .pdf-modal-close:hover {
+        color: #ff6b6b;
+    }
+}
+    
+    .visual-navigator-wrapper {
+        background: #1a1a1a;
+        color: var(--text-color);
+    }
+    
+    .visual-nav-filters {
+        background: #262626;
+        border-color: var(--border-color);
+    }
+    
+    .folder-dropdown {
+        background-color: #2c2c2c;
+        color: var(--text-color);
+        border-color: var(--border-color);
+    }
+    
+    .folder-dropdown optgroup {
+        background-color: #363636;
+        color: var(--primary-color);
+        border-color: var(--border-color);
+    }
+    
+    .folder-dropdown option {
+        background-color: #2c2c2c;
+        color: var(--text-color);
+    }
+    
+    .folder-dropdown option[data-parent] {
+        background-color: #333;
+        color: var(--text-light);
+    }
+    
+    .folder-dropdown option[value="0"] {
+        background-color: #363636;
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    
+    .acta-card {
+        background: #2c2c2c;
+        border-color: var(--border-color);
+        color: var(--text-color);
+    }
+    
+    .acta-folder {
+        background: #404040;
+        color: var(--text-light);
+    }
+    
+    .results-info {
+        background: #2c2c2c;
+        border-color: var(--border-color);
+        color: var(--text-color);
+    }
+    
+    .pagination-btn {
+        background: #2c2c2c;
+        border-color: var(--border-color);
+        color: var(--text-color);
+    }
+    
+    .loading-overlay {
+        background: rgba(26,26,26,0.9);
+    }
+}

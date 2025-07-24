@@ -1,0 +1,706 @@
+/* Visor PDF Crisman - Estilos */
+
+/* Lista de actas */
+.actas-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.acta-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    background: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.acta-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.acta-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.acta-meta {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.acta-description {
+    font-size: 14px;
+    line-height: 1.4;
+    margin-bottom: 15px;
+    color: #555;
+}
+
+.ver-acta-btn {
+    background: #0073aa;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.ver-acta-btn:hover {
+    background: #005a87;
+}
+
+/* Modal del visor */
+.actas-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.modal-content {
+    position: relative;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    max-width: 98vw;
+    max-height: 98vh;
+    width: 95vw;
+    height: 95vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+    background: #f8f9fa;
+    flex-shrink: 0;
+}
+
+.modal-title {
+    margin: 0;
+    color: #333;
+    font-size: 20px;
+}
+
+.close-modal {
+    background: #f8f9fa;
+    border: 2px solid #dc3545;
+    font-size: 24px;
+    cursor: pointer;
+    color: #dc3545;
+    padding: 0;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+}
+
+.close-modal:hover {
+    background: #dc3545;
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
+}
+
+.close-modal:active {
+    transform: scale(0.95);
+}
+
+.modal-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+}
+
+/* Controles del PDF */
+.pdf-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #eee;
+    gap: 15px;
+    flex-shrink: 0;
+}
+
+.controls-left,
+.controls-center,
+.controls-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.controls-center {
+    flex: 1;
+    justify-content: center;
+}
+
+.close-modal-center {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+}
+
+.close-modal-center:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.prev-page, .next-page {
+    background: #0073aa;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.prev-page:hover:not(:disabled), 
+.next-page:hover:not(:disabled) {
+    background: #005a87;
+}
+
+.prev-page:disabled, 
+.next-page:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.page-info {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+    color: #333;
+}
+
+.page-input {
+    width: 60px;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    text-align: center;
+    font-size: 14px;
+}
+
+/* Controles de zoom */
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.zoom-out, .zoom-in, .zoom-fit {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.2s;
+    min-width: 35px;
+}
+
+.zoom-out:hover, .zoom-in:hover, .zoom-fit:hover {
+    background: #1e7e34;
+}
+
+.zoom-level {
+    font-size: 12px;
+    color: #666;
+    min-width: 40px;
+    text-align: center;
+    font-weight: bold;
+}
+
+/* Botón de cerrar prominente - ROJO Y DESTACADO */
+.close-modal-prominent {
+    background: linear-gradient(145deg, #ff1744 0%, #d50000 100%);
+    color: white;
+    border: 3px solid #fff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 20px rgba(255, 23, 68, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    min-width: 120px;
+    justify-content: center;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.close-modal-prominent::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.close-modal-prominent:hover::before {
+    left: 100%;
+}
+
+.close-modal-prominent:hover {
+    background: linear-gradient(145deg, #d50000 0%, #b71c1c 100%);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(255, 23, 68, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    border-color: #ffebee;
+}
+
+.close-modal-prominent:active {
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 4px 15px rgba(255, 23, 68, 0.5);
+}
+
+.close-modal-prominent .close-icon {
+    font-size: 20px;
+    font-weight: 900;
+    line-height: 1;
+    display: inline-block;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.close-modal-prominent .close-text {
+    font-size: 14px;
+    font-weight: 800;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Efecto de pulso más prominente para el botón cerrar */
+@keyframes pulse-close-prominent {
+    0% {
+        box-shadow: 0 6px 20px rgba(255, 23, 68, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 8px 30px rgba(255, 23, 68, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        transform: scale(1.02);
+    }
+    100% {
+        box-shadow: 0 6px 20px rgba(255, 23, 68, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        transform: scale(1);
+    }
+}
+
+.close-modal-prominent {
+    animation: pulse-close-prominent 2.5s ease-in-out infinite;
+}
+
+.close-modal-prominent:hover {
+    animation: none; /* Detener pulso al hacer hover */
+}
+
+.loading-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    max-width: 80%;
+    text-align: center;
+    border: 1px solid #e9ecef;
+}
+
+.loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.loading-spinner-inline {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #007cba;
+    border-radius: 50%;
+    animation: spinner-rotate 1s linear infinite;
+}
+
+.loading-text {
+    font-size: 14px;
+    color: #495057;
+    line-height: 1.4;
+    max-width: 400px;
+    font-weight: 500;
+}
+
+@keyframes spinner-rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Contenedor del visor */
+.pdf-viewer-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #f5f5f5;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    height: 100%;
+    min-height: 0;
+}
+
+.pdf-page-display {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 10px;
+    overflow: auto;
+    background: #f5f5f5;
+    position: relative;
+    height: 100%;
+}
+
+.pdf-page-image {
+    max-width: 95%;
+    height: auto;
+    width: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border: 1px solid #ddd;
+    background: white;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    pointer-events: none;
+    display: block;
+    margin: 0 auto;
+    object-fit: contain;
+    transform-origin: top center;
+    vertical-align: top;
+}
+
+/* Protecciones adicionales */
+.pdf-viewer-container * {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+}
+
+/* Permitir eventos en controles y scroll */
+.pdf-viewer-container button,
+.pdf-viewer-container input,
+.pdf-page-display {
+    pointer-events: auto !important;
+}
+
+/* Asegurar que el scroll funcione */
+.pdf-page-display {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: #888 #f1f1f1;
+}
+
+.pdf-page-display::-webkit-scrollbar {
+    width: 8px;
+}
+
+.pdf-page-display::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.pdf-page-display::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.pdf-page-display::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .modal-content {
+        max-width: 100vw;
+        max-height: 100vh;
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+    }
+    
+    .pdf-controls {
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px;
+    }
+    
+    .controls-left,
+    .controls-center,
+    .controls-right {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .controls-center {
+        order: 3;
+    }
+    
+    .close-modal-center {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+    
+    .zoom-controls {
+        justify-content: center;
+        gap: 5px;
+    }
+    
+    .close-modal-prominent {
+        padding: 10px 16px;
+        font-size: 14px;
+        gap: 8px;
+        min-width: 100px;
+        border-width: 2px;
+    }
+    
+    .close-modal-prominent .close-icon {
+        font-size: 18px;
+    }
+    
+    .close-modal-prominent .close-text {
+        font-size: 12px;
+    }
+    
+    /* Asegurar que el botón sea fácil de tocar en móviles */
+    .close-modal-prominent {
+        min-height: 44px; /* Tamaño mínimo recomendado para touch */
+    }
+    
+    .actas-list {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        margin: 15px 0;
+    }
+    
+    .acta-card {
+        padding: 15px;
+    }
+    
+    .pdf-page-display {
+        padding: 5px;
+    }
+    
+    .pdf-page-image {
+        min-width: 300px;
+    }
+    
+    .loading-indicator {
+        max-width: 95%;
+        padding: 15px 20px;
+    }
+    
+    .loading-text {
+        font-size: 12px;
+        max-width: 280px;
+    }
+    
+    .loading-spinner-inline {
+        width: 24px;
+        height: 24px;
+        border-width: 2px;
+    }
+}
+
+/* Visor Frontend Styles */
+.actas-viewer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.actas-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 10px;
+}
+
+.actas-header h3 {
+    margin: 0 0 10px 0;
+    font-size: 28px;
+}
+
+.actas-header p {
+    margin: 0;
+    font-size: 16px;
+    opacity: 0.9;
+}
+
+.no-actas-message {
+    text-align: center;
+    padding: 40px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    color: #6c757d;
+}
+
+.actas-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    margin-top: 40px;
+}
+
+.security-notice, .usage-instructions {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.security-notice {
+    border-left: 4px solid #dc3545;
+}
+
+.usage-instructions {
+    border-left: 4px solid #17a2b8;
+}
+
+.security-notice h4, .usage-instructions h4 {
+    margin: 0 0 15px 0;
+    color: #2c3e50;
+    font-size: 18px;
+}
+
+.security-notice ul, .usage-instructions ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.security-notice li, .usage-instructions li {
+    margin-bottom: 8px;
+    color: #495057;
+    line-height: 1.4;
+}
+
+/* Botón móvil - SOLO visible en dispositivos móviles */
+.ver-acta-btn-mobile {
+    display: none !important; /* Oculto por defecto en desktop */
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    width: 100%;
+    margin-top: 8px;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+}
+
+.ver-acta-btn-mobile:hover {
+    background: #0056b3;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0, 123, 255, 0.3);
+}
+
+.ver-acta-btn-mobile:active {
+    transform: translateY(0);
+}
+
+/* HACER VISIBLE EN MÓVILES SOLAMENTE */
+@media (max-width: 768px) {
+    .ver-acta-btn-mobile {
+        display: block !important; /* Visible en móviles */
+    }
+    
+    /* Opcional: Ocultar botón desktop en móviles si existe */
+    .ver-acta-btn:not(.ver-acta-btn-mobile) {
+        display: none;
+    }
+}
+
+/* Protección contra impresión */
+@media print {
+    .pdf-viewer-container {
+        display: none !important;
+    }
+    body::after {
+        content: "La impresión de este contenido no está permitida";
+        display: block;
+        text-align: center;
+        font-size: 24px;
+        margin-top: 50px;
+    }
+}
