@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Definir constantes del plugin
-define('VISOR_PDF_CRISMAN_VERSION', '2.0.1');
+define('VISOR_PDF_CRISMAN_VERSION', '2.0.8-MODAL-VISIBLE');
 define('VISOR_PDF_CRISMAN_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('VISOR_PDF_CRISMAN_PLUGIN_URL', plugin_dir_url(__FILE__));
 

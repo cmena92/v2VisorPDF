@@ -1,4 +1,4 @@
-/* Visor PDF Crisman - Estilos */
+/* Visor PDF Crisman - Estilos - VERSION 2.0.5 CSS LIMPIO - CONFLICTOS ELIMINADOS */
 
 /* Lista de actas */
 .actas-list {
@@ -91,6 +91,69 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+}
+
+/* BOTÓN CERRAR PROMINENTE - FORZAR POSICIÓN ABSOLUTA */
+.modal-content .close-modal-prominent,
+.modal-content .close-modal-prominent-corner {
+    position: absolute !important;
+    top: 15px !important;
+    right: 15px !important;
+    z-index: 10001 !important;
+    background: #dc3545 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 12px 20px !important;
+    cursor: pointer !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4) !important;
+    transition: all 0.3s ease !important;
+    min-width: 100px !important;
+    justify-content: center !important;
+    /* Asegurarse de que esté por encima de otros elementos */
+    transform: none !important;
+}
+
+.modal-content .close-modal-prominent:hover,
+.modal-content .close-modal-prominent-corner:hover {
+    background: #c82333 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(220, 53, 69, 0.6) !important;
+}
+
+.modal-content .close-modal-prominent:active,
+.modal-content .close-modal-prominent-corner:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.4) !important;
+}
+
+/* Estilos para iconos y texto */
+.close-modal-prominent .close-icon,
+.close-modal-prominent .close-text,
+.close-modal-prominent-corner .close-icon-large,
+.close-modal-prominent-corner .close-text-large {
+    color: white !important;
+    pointer-events: none;
+}
+
+.close-modal-prominent .close-icon,
+.close-modal-prominent-corner .close-icon-large {
+    font-size: 18px !important;
+    font-weight: bold !important;
+    line-height: 1 !important;
+}
+
+.close-modal-prominent .close-text,
+.close-modal-prominent-corner .close-text-large {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
 }
 
 .modal-header {
@@ -260,7 +323,7 @@
     font-weight: bold;
 }
 
-/* Botón de cerrar prominente - ROJO Y DESTACADO */
+/* Botón de cerrar prominente - DESHABILITADO - Usar el absoluto de arriba
 .close-modal-prominent {
     background: linear-gradient(145deg, #ff1744 0%, #d50000 100%);
     color: white;
@@ -282,8 +345,9 @@
     justify-content: center;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     overflow: hidden;
-}
+} */
 
+/* PSEUDO-ELEMENTOS DESHABILITADOS
 .close-modal-prominent::before {
     content: '';
     position: absolute;
@@ -323,7 +387,7 @@
     font-size: 14px;
     font-weight: 800;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
+} */
 
 /* Efecto de pulso más prominente para el botón cerrar */
 @keyframes pulse-close-prominent {
@@ -688,6 +752,23 @@
     /* Opcional: Ocultar botón desktop en móviles si existe */
     .ver-acta-btn:not(.ver-acta-btn-mobile) {
         display: none;
+    }
+    
+    /* BOTÓN CERRAR PROMINENTE ADAPTADO PARA MÓVILES */
+    .close-modal-prominent-corner {
+        top: 10px;
+        right: 10px;
+        padding: 10px 16px;
+        font-size: 14px;
+        min-width: 80px;
+    }
+    
+    .close-icon-large {
+        font-size: 16px;
+    }
+    
+    .close-text-large {
+        font-size: 12px;
     }
 }
 

@@ -138,8 +138,18 @@
 
 ---
 
-**Última actualización:** 24/07/2025 - Análisis Frontend Completado  
-**Siguiente acción:** Esperando aprobación para correcciones Docker  
+**Última actualización:** 24/07/2025 - Botón Cerrar Prominente Agregado  
+**Siguiente acción:** Completar limpieza de archivos de testing  
+
+### ✅ BOTÓN CERRAR PROMINENTE AGREGADO AL VISOR PDF
+- [x] Botón agregado en esquina superior derecha del modal
+- [x] Diseño prominente con color rojo y efectos hover
+- [x] Responsive design para móviles
+- [x] Event handlers actualizados para manejar el nuevo botón
+- [x] Texto "Cerrar" claramente visible
+- [x] Posición fija (top: 15px, right: 15px)
+
+**Funcionalidad:** El botón permite cerrar el modal del visor PDF y regresar a la lista de actas de manera intuitiva.  
 
 ### ✅ ANÁLISIS FRONTEND ACTAS_HYBRID COMPLETADO
 - [x] Identificados 7 archivos principales del shortcode híbrido
