@@ -8,6 +8,7 @@ jQuery(document).ready(function($) {
             this.totalPages = 1;
             this.isLoading = false;
             this.zoomLevel = 1;
+            this.currentImageURL = null; // CORRECCIÓN: Variable para gestionar ObjectURL
             this.init();
         }
         
@@ -344,8 +345,15 @@ jQuery(document).ready(function($) {
                     }
                     
                     try {
+                        // CORRECCIÓN: Limpiar ObjectURL anterior antes de crear uno nuevo
+                        if (this.currentImageURL) {
+                            URL.revokeObjectURL(this.currentImageURL);
+                            console.log('🗑️ ObjectURL anterior liberado');
+                        }
+                        
                         const imageUrl = URL.createObjectURL(blob);
-                        console.log('✅ ObjectURL creado exitosamente:', imageUrl);
+                        this.currentImageURL = imageUrl; // CORRECCIÓN: Guardar referencia
+                        console.log('✅ ObjectURL creado y guardado:', imageUrl);
                         
                         $('.pdf-page-image')
                             .attr('src', imageUrl)
@@ -370,11 +378,7 @@ jQuery(document).ready(function($) {
                                     this.applyZoom();
                                 }
                                 
-                                // Limpiar URL anterior para evitar acumulación de memoria
-                                setTimeout(() => {
-                                    URL.revokeObjectURL(imageUrl);
-                                    console.log('🗑️ ObjectURL liberado de memoria');
-                                }, 1000);
+                                // CORRECCIÓN: No liberar automáticamente, se hace en closeModal()
                             })
                             .on('error', () => {
                                 console.error('❌ Error al cargar la imagen en el elemento IMG');
@@ -421,6 +425,13 @@ jQuery(document).ready(function($) {
         closeModal() {
             console.log('🔴 Cerrando modal del visor...');
             
+            // CORRECCIÓN: Limpiar ObjectURL antes de cambiar src para evitar el error
+            if (this.currentImageURL) {
+                URL.revokeObjectURL(this.currentImageURL);
+                console.log('🗑️ ObjectURL liberado correctamente al cerrar');
+                this.currentImageURL = null;
+            }
+            
             // Ocultar modal
             $('#actas-modal').hide();
             
@@ -431,13 +442,13 @@ jQuery(document).ready(function($) {
                 console.log('✅ Botón cerrar fijo ocultado');
             }
             
-            // Limpiar imagen y estado
-            $('.pdf-page-image').attr('src', '');
+            // CORRECCIÓN: Limpiar imagen después de liberar ObjectURL
+            $('.pdf-page-image').attr('src', '').hide();
             this.currentActa = null;
             this.currentPage = 1;
             this.stopHeartbeat();
             
-            console.log('✅ Modal cerrado completamente');
+            console.log('✅ Modal cerrado completamente sin errores');
         }
         
         /**

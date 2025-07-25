@@ -38,6 +38,12 @@
    - `quick-test.php`
    - `test-*.php` (múltiples archivos)
 
+### ✅ PROBLEMAS CORREGIDOS:
+4. **Error "Error al mostrar la imagen"** - ✅ SOLUCIONADO
+   - Causa: Race condition en gestión de ObjectURL
+   - Solución: 3 correcciones en `assets/visor-pdf.js`
+   - Resultado: Modal se cierra sin errores
+
 5. **Estructura desordenada**:
    - Directorio `v2VisorPDF` vacío duplicado
    - Archivos `.bat` y `.sh` mezclados (Windows/Linux)
@@ -138,8 +144,51 @@
 
 ---
 
-**Última actualización:** 24/07/2025 - Botón Cerrar Prominente Agregado  
-**Siguiente acción:** Completar limpieza de archivos de testing  
+**Última actualización:** 24/07/2025 - Error Modal Corregido  
+**Siguiente acción:** Validar correcciones y continuar limpieza  
+
+---
+
+## 🛠️ CORRECCIONES TÉCNICAS IMPLEMENTADAS
+
+### ✅ CORRECCIÓN: Error "Error al mostrar la imagen" (24/07/2025)
+
+**Problema identificado:**
+- Error aparecía al cerrar el modal del visor PDF
+- Causa: Race condition en gestión de ObjectURL en JavaScript
+- `URL.revokeObjectURL()` se ejecutaba antes del cierre manual
+
+**Solución implementada (3 cambios en `assets/visor-pdf.js`):**
+
+1. **Variable para gestionar ObjectURL** (línea ~8)
+   ```javascript
+   this.currentImageURL = null; // Nueva variable
+   ```
+
+2. **Gestión correcta en loadPage()** (líneas ~344-350)
+   ```javascript
+   if (this.currentImageURL) {
+       URL.revokeObjectURL(this.currentImageURL);
+   }
+   const imageUrl = URL.createObjectURL(blob);
+   this.currentImageURL = imageUrl;
+   // Eliminado setTimeout() automático
+   ```
+
+3. **Limpieza correcta en closeModal()** (líneas ~429-434)
+   ```javascript
+   if (this.currentImageURL) {
+       URL.revokeObjectURL(this.currentImageURL);
+       this.currentImageURL = null;
+   }
+   // Luego cambiar src
+   ```
+
+**Resultado:**
+- ✅ Modal se cierra sin errores
+- ✅ No más "Error al mostrar la imagen"
+- ✅ Gestión correcta de memoria
+- ✅ Experiencia de usuario mejorada
 
 ### ✅ BOTÓN CERRAR PROMINENTE AGREGADO AL VISOR PDF
 - [x] Botón agregado en esquina superior derecha del modal
