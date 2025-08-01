@@ -50,9 +50,35 @@ class VisorPDFCrisman {
     }
     
     /**
+     * Verificar si necesita actualizaciones automáticamente
+     */
+    private function check_for_updates() {
+        // Solo verificar en admin y si el archivo existe
+        if (!is_admin()) {
+            return;
+        }
+        
+        $installer_path = VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-plugin-installer.php';
+        if (!file_exists($installer_path)) {
+            return;
+        }
+        
+        require_once $installer_path;
+        
+        // Verificar si necesita actualización
+        if (Visor_PDF_Plugin_Installer::needs_update()) {
+            error_log('[Visor PDF] Actualización automática detectada - Ejecutando...');
+            Visor_PDF_Plugin_Installer::update();
+        }
+    }
+    
+    /**
      * Inicialización retrasada para evitar problemas con conditional tags
      */
     public function delayed_init() {
+        // Verificar si necesita actualización
+        $this->check_for_updates();
+        
         $this->init_hooks();
         $this->load_dependencies();
         $this->init_modules();
@@ -109,6 +135,7 @@ class VisorPDFCrisman {
      * Cargar dependencias
      */
     private function load_dependencies() {
+        require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-plugin-installer.php';
         require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/install-utils.php';
         require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/security-config.php';
         require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-visor-core.php';
@@ -147,10 +174,21 @@ class VisorPDFCrisman {
      * Activación del plugin
      */
     public function activate() {
-        $this->create_tables();
-        $this->setup_default_folders();
-        $this->upgrade_analytics_tables();
+        // Cargar la clase instaladora
+        require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-plugin-installer.php';
+        
+        // Ejecutar instalación completa
+        Visor_PDF_Plugin_Installer::install();
+        
+        // Verificar si necesita actualización
+        if (Visor_PDF_Plugin_Installer::needs_update()) {
+            Visor_PDF_Plugin_Installer::update();
+        }
+        
         flush_rewrite_rules();
+        
+        // Log de activación
+        error_log('[Visor PDF] Plugin activado correctamente - Versión: ' . VISOR_PDF_CRISMAN_VERSION);
     }
     
     /**
@@ -161,115 +199,30 @@ class VisorPDFCrisman {
     }
     
     /**
-     * Crear tablas de base de datos
+     * Crear tablas de base de datos (DEPRECATED)
+     * @deprecated Usar Visor_PDF_Plugin_Installer::create_database_tables()
      */
     private function create_tables() {
-        global $wpdb;
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-        
-        // Tabla para logs de visualización
-        $sql = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}actas_logs (
-            id int(11) NOT NULL AUTO_INCREMENT,
-            user_id int(11) NOT NULL,
-            numero_colegiado varchar(50) NOT NULL,
-            acta_filename varchar(255) NOT NULL,
-            folder_id int(11),
-            page_viewed int(11) NOT NULL,
-            viewed_at datetime DEFAULT CURRENT_TIMESTAMP,
-            ip_address varchar(45),
-            user_agent text,
-            PRIMARY KEY (id),
-            INDEX idx_user_acta (user_id, acta_filename),
-            INDEX idx_colegiado (numero_colegiado),
-            INDEX idx_folder_id (folder_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
-        dbDelta($sql);
-        
-        // Tabla para metadatos de actas
-        $sql_actas = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}actas_metadata (
-            id int(11) NOT NULL AUTO_INCREMENT,
-            filename varchar(255) NOT NULL,
-            original_name varchar(255) NOT NULL,
-            title varchar(255),
-            description text,
-            folder_id int(11),
-            upload_date datetime DEFAULT CURRENT_TIMESTAMP,
-            uploaded_by int(11),
-            total_pages int(11),
-            file_size bigint,
-            status enum('active', 'inactive') DEFAULT 'active',
-            PRIMARY KEY (id),
-            UNIQUE KEY uk_filename (filename),
-            INDEX idx_folder_id (folder_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
-        dbDelta($sql_actas);
-        
-        // Tabla para carpetas
-        $sql_folders = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}actas_folders (
-            id int(11) NOT NULL AUTO_INCREMENT,
-            name varchar(255) NOT NULL,
-            slug varchar(255) NOT NULL UNIQUE,
-            parent_id int(11),
-            order_index int(11) DEFAULT 0,
-            visible_frontend tinyint(1) DEFAULT 1,
-            created_at datetime DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            INDEX idx_parent_id (parent_id),
-            INDEX idx_slug (slug),
-            INDEX idx_order (order_index)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
-        dbDelta($sql_folders);
-        
-        // Tabla para actividades sospechosas
-        $sql_suspicious = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}actas_suspicious_logs (
-            id int(11) NOT NULL AUTO_INCREMENT,
-            user_id int(11) NOT NULL,
-            numero_colegiado varchar(50) NOT NULL,
-            acta_id int(11),
-            activity_type varchar(100) NOT NULL,
-            page_num int(11),
-            ip_address varchar(45),
-            user_agent text,
-            logged_at datetime DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            INDEX idx_user_activity (user_id, activity_type),
-            INDEX idx_acta_activity (acta_id, activity_type)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
-        dbDelta($sql_suspicious);
+        error_log('[Visor PDF] create_tables() está deprecated, usar Visor_PDF_Plugin_Installer::create_database_tables()');
+        // Método deprecated - la funcionalidad se encuentra en Visor_PDF_Plugin_Installer
     }
     
     /**
-     * Configurar carpetas predefinidas
+     * Configurar carpetas predefinidas (DEPRECATED)
+     * @deprecated Usar Visor_PDF_Plugin_Installer::create_default_folders()
      */
     private function setup_default_folders() {
-        global $wpdb;
-        
-        $existing_folders = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}actas_folders");
-        if ($existing_folders > 0) {
-            return;
-        }
-        
-        $default_folders = array(
-            array('name' => 'Actas de Junta Directiva', 'slug' => 'junta-directiva', 'parent_id' => null, 'order_index' => 1, 'visible_frontend' => 1),
-            array('name' => 'Actas de Asamblea', 'slug' => 'asamblea', 'parent_id' => null, 'order_index' => 2, 'visible_frontend' => 1),
-            array('name' => 'Sin Clasificar', 'slug' => 'sin-clasificar', 'parent_id' => null, 'order_index' => 999, 'visible_frontend' => 0)
-        );
-        
-        foreach ($default_folders as $folder) {
-            $wpdb->insert($wpdb->prefix . 'actas_folders', $folder, array('%s', '%s', '%d', '%d', '%d'));
-        }
+        error_log('[Visor PDF] setup_default_folders() está deprecated, usar Visor_PDF_Plugin_Installer::create_default_folders()');
+        // Método deprecated - la funcionalidad se encuentra en Visor_PDF_Plugin_Installer
     }
     
     /**
-     * Actualizar tablas para analytics
+     * Actualizar tablas para analytics (DEPRECATED)
+     * @deprecated Usar Visor_PDF_Plugin_Installer::update()
      */
     private function upgrade_analytics_tables() {
-        if (class_exists('Visor_PDF_Analytics')) {
-            $analytics = new Visor_PDF_Analytics();
-            if (method_exists($analytics, 'upgrade_tables_for_analytics')) {
-                $analytics->upgrade_tables_for_analytics();
-            }
-        }
+        error_log('[Visor PDF] upgrade_analytics_tables() está deprecated, usar Visor_PDF_Plugin_Installer::update()');
+        // Método deprecated - la funcionalidad se encuentra en Visor_PDF_Plugin_Installer
     }
     
     /**
@@ -330,6 +283,24 @@ class VisorPDFCrisman {
             'visor-pdf-crisman-debug-navegador',
             array($this, 'debug_navegador_page')
         );
+        
+        add_submenu_page(
+            'visor-pdf-crisman',
+            'Estado de Instalación',
+            'Estado Sistema',
+            'manage_options',
+            'visor-pdf-crisman-installation-status',
+            array($this, 'installation_status_page')
+        );
+        
+        add_submenu_page(
+            'visor-pdf-crisman',
+            'Herramientas de Migración',
+            'Migración',
+            'manage_options',
+            'visor-pdf-crisman-migration',
+            array($this, 'migration_page')
+        );
     }
     
     /**
@@ -377,6 +348,16 @@ class VisorPDFCrisman {
     
     public function debug_navegador_page() {
         echo '<div class="notice notice-error"><p>Debug de navegador eliminado - Solo disponible shortcode híbrido</p></div>';
+    }
+    
+    public function installation_status_page() {
+        require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-plugin-installer.php';
+        include VISOR_PDF_CRISMAN_PLUGIN_DIR . 'templates/admin-installation-status.php';
+    }
+    
+    public function migration_page() {
+        require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-migration-helper.php';
+        include VISOR_PDF_CRISMAN_PLUGIN_DIR . 'templates/admin-migration.php';
     }
     
     /**

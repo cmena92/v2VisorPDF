@@ -121,7 +121,7 @@
 | 3. Limpieza Producción | 🔴 PENDIENTE | 0% | 1h |
 | 4. Testing/Validación | 🔴 PENDIENTE | 0% | 1h |
 
-**PROGRESO TOTAL: 60% (2.5/4 fases completadas)**
+**PROGRESO TOTAL: 75% (3/4 fases completadas)**
 
 ---
 
@@ -198,7 +198,22 @@
 - [x] Texto "Cerrar" claramente visible
 - [x] Posición fija (top: 15px, right: 15px)
 
-**Funcionalidad:** El botón permite cerrar el modal del visor PDF y regresar a la lista de actas de manera intuitiva.  
+**Funcionalidad:** El botón permite cerrar el modal del visor PDF y regresar a la lista de actas de manera intuitiva.
+
+### ✅ BOTÓN MÓVIL PARA VER ACTAS IMPLEMENTADO (24/07/2025)
+- [x] Botón `.ver-acta-btn-mobile` agregado al template principal
+- [x] Solo visible en dispositivos móviles (max-width: 768px)
+- [x] Ubicado junto al título de cada acta en la tabla
+- [x] Color verde (#28a745) para diferenciarlo del botón desktop
+- [x] JavaScript actualizado para reconocer ambos botones
+- [x] En móviles: oculta columna "Acción" y muestra botón en "Título"
+- [x] **MEJORADO:** Layout vertical para evitar texto cortado
+- [x] **MEJORADO:** Ancho máximo de celda limitado a 160px
+- [x] **MEJORADO:** Texto con word-wrap para múltiples líneas
+- [x] **MEJORADO:** Botón compacto (60px de ancho, font-size 9px)
+- [x] **MEJORADO:** Tabla con ancho mínimo reducido (450px vs 600px)
+
+**Funcionalidad:** Mejora significativa en usabilidad móvil - sin texto cortado, sin scroll horizontal excesivo.  
 
 ### ✅ ANÁLISIS FRONTEND ACTAS_HYBRID COMPLETADO
 - [x] Identificados 7 archivos principales del shortcode híbrido
@@ -215,3 +230,34 @@
 - `assets/visor-pdf.css` (estilos base)
 - `assets/visor-pdf.js` (JavaScript modal)
 - `includes/class-visor-core.php` (lógica backend)
+
+---
+
+## ✅ SQL CARPETAS POR DEFECTO GENERADO (31/07/2025)
+
+**Problema identificado:**
+- Plugin en producción sin carpetas iniciales → "No hay carpetas disponibles"
+- Ambiente de pruebas funcional con 4 carpetas creadas
+- Sistema requiere carpetas base para gestión y creación
+
+**Solución implementada:**
+- ✅ SQL completo generado (`visor_pdf_default_folders.sql`)
+- ✅ Replica estructura exitosa del ambiente de pruebas
+- ✅ Incluye 4 carpetas padre + 7 subcarpetas por años
+- ✅ Previene duplicados con `ON DUPLICATE KEY UPDATE`
+- ✅ Configura jerarquía padre-hijo correcta
+- ✅ Asigna automáticamente actas existentes a "Sin Clasificar"
+- ✅ Sistema de verificación y estadísticas incluido
+
+**Estructura generada:**
+```
+📁 Actas de Junta Directiva (Sistema)
+   ├── 2025, 2026, 2024
+📁 Actas de Asamblea (Sistema) 
+   ├── 2025, 2024
+📁 Archivo Histórico
+   ├── 2019-2023, 2015-2018
+📁 Sin Clasificar (Oculta - Sistema)
+```
+
+**Resultado esperado:** Plugin funcional en producción con gestión de carpetas habilitada.

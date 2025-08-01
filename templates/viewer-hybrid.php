@@ -113,6 +113,14 @@ $carpetas = $all_carpetas;
                                     <img src="https://preproduccion.cpic.or.cr/wp-content/wp-file-download/icons/svg/pdf.svg?version=1733930755" 
                                          alt="PDF" class="pdf-icon" width="20" height="20">
                                     <span class="acta-title-text"><?php echo esc_html($acta->title ?: 'Acta sin título'); ?></span>
+                                    
+                                    <!-- Botón para móviles - Solo visible en dispositivos móviles -->
+                                    <button class="ver-acta-btn-mobile" 
+                                            data-acta-id="<?php echo $acta->id; ?>"
+                                            data-total-pages="<?php echo intval($acta->total_pages); ?>"
+                                            data-acta-title="<?php echo esc_attr($acta->title); ?>">
+                                        Ver Acta
+                                    </button>
                                 </td>
                                 <td class="acta-date-cell">
                                     <?php echo date('d/m/Y', strtotime($acta->upload_date)); ?>
@@ -457,6 +465,27 @@ $carpetas = $all_carpetas;
     background: #0056b3;
 }
 
+/* CORRECCIÓN: Botón móvil - Solo visible en dispositivos móviles */
+.ver-acta-btn-mobile {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 10px;
+    transition: all 0.2s;
+    /* Por defecto oculto en desktop */
+    display: none;
+}
+
+.ver-acta-btn-mobile:hover {
+    background: #218838;
+    transform: scale(1.05);
+}
+
 .actas-info {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -524,7 +553,7 @@ $carpetas = $all_carpetas;
     }
     
     .actas-table {
-        min-width: 600px;
+        min-width: 450px; /* CORRECCIÓN: Reducir ancho mínimo para móviles */
     }
     
     .actas-table th,
@@ -533,9 +562,61 @@ $carpetas = $all_carpetas;
         font-size: 12px;
     }
     
+    /* CORRECCIÓN: En móviles, ocultar botón desktop y mostrar botón móvil */
     .ver-acta-btn {
-        padding: 4px 8px;
-        font-size: 11px;
+        display: none !important; /* Ocultar botón desktop en móviles */
+    }
+    
+    .ver-acta-btn-mobile {
+        display: block !important; /* CORRECCIÓN: Mostrar como bloque */
+        margin: 2px 0 0 0; /* CORRECCIÓN: Solo margen superior */
+        padding: 4px 6px; /* CORRECCIÓN: Padding muy compacto */
+        font-size: 9px; /* CORRECCIÓN: Texto muy pequeño */
+        width: 60px; /* CORRECCIÓN: Ancho fijo pequeño */
+        text-align: center;
+        border-radius: 3px;
+        line-height: 1;
+    }
+    
+    /* CORRECCIÓN: Ajustar celda de título para móviles */
+    .acta-title-cell {
+        flex-direction: column !important; /* Dirección vertical */
+        align-items: flex-start !important;
+        gap: 3px !important;
+        max-width: 160px !important; /* Limitar ancho */
+        padding: 6px 8px !important;
+    }
+    
+    .acta-title-text {
+        word-wrap: break-word !important; /* Permitir ruptura */
+        overflow-wrap: break-word !important;
+        white-space: normal !important; /* Múltiples líneas */
+        line-height: 1.2 !important;
+        font-size: 10px !important; /* Texto más pequeño */
+        width: 100% !important;
+        display: block !important;
+    }
+    
+    /* Ocultar columna de acción en móviles ya que el botón está en el título */
+    .acta-action-cell {
+        display: none;
+    }
+    
+    /* Ocultar header de acción en móviles */
+    .actas-table th:last-child {
+        display: none;
+    }
+    
+    /* Ajustar celda del título para el botón móvil */
+    .acta-title-cell {
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 6px;
+    }
+    
+    .acta-title-text {
+        flex: 1;
+        min-width: 0; /* Permite que el texto se trunce si es necesario */
     }
 }
 </style>

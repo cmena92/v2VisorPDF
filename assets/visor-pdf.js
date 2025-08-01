@@ -18,11 +18,12 @@ jQuery(document).ready(function($) {
         }
         
         bindEvents() {
-            // Abrir acta
-            $(document).on('click', '.ver-acta-btn', (e) => {
+            // Abrir acta - Botón desktop y móvil
+            $(document).on('click', '.ver-acta-btn, .ver-acta-btn-mobile', (e) => {
                 e.preventDefault();
                 const actaId = $(e.target).data('acta-id');
                 const totalPages = $(e.target).data('total-pages');
+                console.log('📱 Abriendo acta desde botón:', e.target.className, 'Acta ID:', actaId);
                 this.openActa(actaId, totalPages);
             });
             
