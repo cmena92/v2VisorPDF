@@ -1,10 +1,18 @@
 <?php
 /**
  * Plugin Name: Visor PDF Crisman
+ * Plugin URI: https://github.com/tu-usuario/visor-pdf-crisman
  * Description: Sistema seguro para cargar, visualizar y controlar acceso a actas PDF con marcas de agua - CORREGIDO
  * Version: 2.0.1
  * Author: Crisman
+ * Author URI: https://tu-sitio-web.com
+ * License: GPL v2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: visor-pdf-crisman
+ * Domain Path: /languages
+ * Requires at least: 5.0
+ * Requires PHP: 7.4
+ * Update URI: https://github.com/tu-usuario/visor-pdf-crisman
  */
 
 // Prevenir acceso directo
@@ -13,7 +21,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Definir constantes del plugin
-define('VISOR_PDF_CRISMAN_VERSION', '2.0.8-MODAL-VISIBLE');
+define('VISOR_PDF_CRISMAN_VERSION', '2.0.1');
 define('VISOR_PDF_CRISMAN_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('VISOR_PDF_CRISMAN_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -29,6 +37,7 @@ class VisorPDFCrisman {
     private $mass_upload;
     private $frontend_navigation;
     private $analytics;
+    private $updater;
     
     /**
      * Singleton pattern
@@ -50,35 +59,9 @@ class VisorPDFCrisman {
     }
     
     /**
-     * Verificar si necesita actualizaciones automáticamente
-     */
-    private function check_for_updates() {
-        // Solo verificar en admin y si el archivo existe
-        if (!is_admin()) {
-            return;
-        }
-        
-        $installer_path = VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-plugin-installer.php';
-        if (!file_exists($installer_path)) {
-            return;
-        }
-        
-        require_once $installer_path;
-        
-        // Verificar si necesita actualización
-        if (Visor_PDF_Plugin_Installer::needs_update()) {
-            error_log('[Visor PDF] Actualización automática detectada - Ejecutando...');
-            Visor_PDF_Plugin_Installer::update();
-        }
-    }
-    
-    /**
      * Inicialización retrasada para evitar problemas con conditional tags
      */
     public function delayed_init() {
-        // Verificar si necesita actualización
-        $this->check_for_updates();
-        
         $this->init_hooks();
         $this->load_dependencies();
         $this->init_modules();
@@ -92,7 +75,12 @@ class VisorPDFCrisman {
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_scripts'));
         add_action('admin_menu', array($this, 'admin_menu'));
         
-        // Shortcodes - SOLO HÍBRIDO
+        // Agregar enlace de configuración en la lista de plugins
+        add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'add_settings_link'));
+        
+        // Shortcodes
+        add_shortcode('actas_viewer', array($this, 'shortcode_actas_viewer'));
+        add_shortcode('actas_navigator_visual', array($this, 'shortcode_visual_navigator'));
         add_shortcode('actas_hybrid', array($this, 'shortcode_actas_hybrid'));
         
         // AJAX para funcionalidad base (visor)
@@ -127,6 +115,10 @@ class VisorPDFCrisman {
         add_action('wp_ajax_migrate_to_hierarchy', array($this, 'ajax_migrate_to_hierarchy'));
         add_action('wp_ajax_reset_folders', array($this, 'ajax_reset_folders'));
         
+        // AJAX para sistema de actualizaciones
+        add_action('wp_ajax_visor_pdf_check_update', array($this, 'ajax_check_update'));
+        add_action('wp_ajax_visor_pdf_update_status', array($this, 'ajax_update_status'));
+        
         // Widget en dashboard
         add_action('wp_dashboard_setup', array($this, 'add_dashboard_widget'));
     }
@@ -135,14 +127,18 @@ class VisorPDFCrisman {
      * Cargar dependencias
      */
     private function load_dependencies() {
-        require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-plugin-installer.php';
         require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/install-utils.php';
         require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/security-config.php';
         require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-visor-core.php';
         require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-folders-manager.php';
         require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-mass-upload.php';
-        // require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-frontend-navigation.php'; // ELIMINADO
+        require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-frontend-navigation.php';
         require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-analytics.php';
+        
+        // Cargar sistema de actualizaciones
+        if (file_exists(VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-plugin-updater.php')) {
+            require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-plugin-updater.php';
+        }
     }
     
     /**
@@ -158,7 +154,13 @@ class VisorPDFCrisman {
             $this->analytics = new Visor_PDF_Analytics();
         }
         
-        // Navegación frontend - ELIMINADO - Solo híbrido disponible
+        // Navegación frontend disponible siempre
+        $this->frontend_navigation = new Visor_PDF_Frontend_Navigation();
+        
+        // Inicializar sistema de actualizaciones
+        if (class_exists('Visor_PDF_Plugin_Updater')) {
+            $this->updater = new Visor_PDF_Plugin_Updater(__FILE__);
+        }
     }
     
     /**
@@ -174,21 +176,10 @@ class VisorPDFCrisman {
      * Activación del plugin
      */
     public function activate() {
-        // Cargar la clase instaladora
-        require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-plugin-installer.php';
-        
-        // Ejecutar instalación completa
-        Visor_PDF_Plugin_Installer::install();
-        
-        // Verificar si necesita actualización
-        if (Visor_PDF_Plugin_Installer::needs_update()) {
-            Visor_PDF_Plugin_Installer::update();
-        }
-        
+        $this->create_tables();
+        $this->setup_default_folders();
+        $this->upgrade_analytics_tables();
         flush_rewrite_rules();
-        
-        // Log de activación
-        error_log('[Visor PDF] Plugin activado correctamente - Versión: ' . VISOR_PDF_CRISMAN_VERSION);
     }
     
     /**
@@ -199,30 +190,115 @@ class VisorPDFCrisman {
     }
     
     /**
-     * Crear tablas de base de datos (DEPRECATED)
-     * @deprecated Usar Visor_PDF_Plugin_Installer::create_database_tables()
+     * Crear tablas de base de datos
      */
     private function create_tables() {
-        error_log('[Visor PDF] create_tables() está deprecated, usar Visor_PDF_Plugin_Installer::create_database_tables()');
-        // Método deprecated - la funcionalidad se encuentra en Visor_PDF_Plugin_Installer
+        global $wpdb;
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        
+        // Tabla para logs de visualización
+        $sql = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}actas_logs (
+            id int(11) NOT NULL AUTO_INCREMENT,
+            user_id int(11) NOT NULL,
+            numero_colegiado varchar(50) NOT NULL,
+            acta_filename varchar(255) NOT NULL,
+            folder_id int(11),
+            page_viewed int(11) NOT NULL,
+            viewed_at datetime DEFAULT CURRENT_TIMESTAMP,
+            ip_address varchar(45),
+            user_agent text,
+            PRIMARY KEY (id),
+            INDEX idx_user_acta (user_id, acta_filename),
+            INDEX idx_colegiado (numero_colegiado),
+            INDEX idx_folder_id (folder_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+        dbDelta($sql);
+        
+        // Tabla para metadatos de actas
+        $sql_actas = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}actas_metadata (
+            id int(11) NOT NULL AUTO_INCREMENT,
+            filename varchar(255) NOT NULL,
+            original_name varchar(255) NOT NULL,
+            title varchar(255),
+            description text,
+            folder_id int(11),
+            upload_date datetime DEFAULT CURRENT_TIMESTAMP,
+            uploaded_by int(11),
+            total_pages int(11),
+            file_size bigint,
+            status enum('active', 'inactive') DEFAULT 'active',
+            PRIMARY KEY (id),
+            UNIQUE KEY uk_filename (filename),
+            INDEX idx_folder_id (folder_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+        dbDelta($sql_actas);
+        
+        // Tabla para carpetas
+        $sql_folders = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}actas_folders (
+            id int(11) NOT NULL AUTO_INCREMENT,
+            name varchar(255) NOT NULL,
+            slug varchar(255) NOT NULL UNIQUE,
+            parent_id int(11),
+            order_index int(11) DEFAULT 0,
+            visible_frontend tinyint(1) DEFAULT 1,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            INDEX idx_parent_id (parent_id),
+            INDEX idx_slug (slug),
+            INDEX idx_order (order_index)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+        dbDelta($sql_folders);
+        
+        // Tabla para actividades sospechosas
+        $sql_suspicious = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}actas_suspicious_logs (
+            id int(11) NOT NULL AUTO_INCREMENT,
+            user_id int(11) NOT NULL,
+            numero_colegiado varchar(50) NOT NULL,
+            acta_id int(11),
+            activity_type varchar(100) NOT NULL,
+            page_num int(11),
+            ip_address varchar(45),
+            user_agent text,
+            logged_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            INDEX idx_user_activity (user_id, activity_type),
+            INDEX idx_acta_activity (acta_id, activity_type)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+        dbDelta($sql_suspicious);
     }
     
     /**
-     * Configurar carpetas predefinidas (DEPRECATED)
-     * @deprecated Usar Visor_PDF_Plugin_Installer::create_default_folders()
+     * Configurar carpetas predefinidas
      */
     private function setup_default_folders() {
-        error_log('[Visor PDF] setup_default_folders() está deprecated, usar Visor_PDF_Plugin_Installer::create_default_folders()');
-        // Método deprecated - la funcionalidad se encuentra en Visor_PDF_Plugin_Installer
+        global $wpdb;
+        
+        $existing_folders = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}actas_folders");
+        if ($existing_folders > 0) {
+            return;
+        }
+        
+        $default_folders = array(
+            array('name' => 'Actas de Junta Directiva', 'slug' => 'junta-directiva', 'parent_id' => null, 'order_index' => 1, 'visible_frontend' => 1),
+            array('name' => 'Actas de Asamblea', 'slug' => 'asamblea', 'parent_id' => null, 'order_index' => 2, 'visible_frontend' => 1),
+            array('name' => 'Sin Clasificar', 'slug' => 'sin-clasificar', 'parent_id' => null, 'order_index' => 999, 'visible_frontend' => 0)
+        );
+        
+        foreach ($default_folders as $folder) {
+            $wpdb->insert($wpdb->prefix . 'actas_folders', $folder, array('%s', '%s', '%d', '%d', '%d'));
+        }
     }
     
     /**
-     * Actualizar tablas para analytics (DEPRECATED)
-     * @deprecated Usar Visor_PDF_Plugin_Installer::update()
+     * Actualizar tablas para analytics
      */
     private function upgrade_analytics_tables() {
-        error_log('[Visor PDF] upgrade_analytics_tables() está deprecated, usar Visor_PDF_Plugin_Installer::update()');
-        // Método deprecated - la funcionalidad se encuentra en Visor_PDF_Plugin_Installer
+        if (class_exists('Visor_PDF_Analytics')) {
+            $analytics = new Visor_PDF_Analytics();
+            if (method_exists($analytics, 'upgrade_tables_for_analytics')) {
+                $analytics->upgrade_tables_for_analytics();
+            }
+        }
     }
     
     /**
@@ -283,24 +359,15 @@ class VisorPDFCrisman {
             'visor-pdf-crisman-debug-navegador',
             array($this, 'debug_navegador_page')
         );
-        
-        add_submenu_page(
-            'visor-pdf-crisman',
-            'Estado de Instalación',
-            'Estado Sistema',
-            'manage_options',
-            'visor-pdf-crisman-installation-status',
-            array($this, 'installation_status_page')
-        );
-        
-        add_submenu_page(
-            'visor-pdf-crisman',
-            'Herramientas de Migración',
-            'Migración',
-            'manage_options',
-            'visor-pdf-crisman-migration',
-            array($this, 'migration_page')
-        );
+    }
+    
+    /**
+     * Agregar enlace de configuración en la lista de plugins
+     */
+    public function add_settings_link($links) {
+        $settings_link = '<a href="' . admin_url('admin.php?page=visor-pdf-crisman') . '">' . __('Configuración', 'visor-pdf-crisman') . '</a>';
+        array_unshift($links, $settings_link);
+        return $links;
     }
     
     /**
@@ -347,17 +414,7 @@ class VisorPDFCrisman {
     }
     
     public function debug_navegador_page() {
-        echo '<div class="notice notice-error"><p>Debug de navegador eliminado - Solo disponible shortcode híbrido</p></div>';
-    }
-    
-    public function installation_status_page() {
-        require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-plugin-installer.php';
-        include VISOR_PDF_CRISMAN_PLUGIN_DIR . 'templates/admin-installation-status.php';
-    }
-    
-    public function migration_page() {
-        require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-migration-helper.php';
-        include VISOR_PDF_CRISMAN_PLUGIN_DIR . 'templates/admin-migration.php';
+        include VISOR_PDF_CRISMAN_PLUGIN_DIR . 'debug-navigator.php';
     }
     
     /**
@@ -371,7 +428,9 @@ class VisorPDFCrisman {
         $load_scripts = false;
         
         if (is_singular() && $post) {
-            if (has_shortcode($post->post_content, 'actas_hybrid')) {
+            if (has_shortcode($post->post_content, 'actas_viewer') || 
+                has_shortcode($post->post_content, 'actas_hybrid') ||
+                has_shortcode($post->post_content, 'actas_navigator_visual')) {
                 $load_scripts = true;
             }
         }
@@ -980,6 +1039,76 @@ class VisorPDFCrisman {
     }
     
     /**
+     * AJAX: Verificar actualizaciones
+     */
+    public function ajax_check_update() {
+        if (!current_user_can('manage_options')) {
+            wp_die('Acceso denegado');
+        }
+        
+        if (!wp_verify_nonce($_POST['nonce'], 'visor_pdf_check_update')) {
+            wp_die('Acceso denegado');
+        }
+        
+        // Limpiar caché para forzar verificación
+        delete_transient('visor_pdf_update_info');
+        
+        if ($this->updater && method_exists($this->updater, 'check_for_update')) {
+            // Simular verificación de actualización
+            $current_version = VISOR_PDF_CRISMAN_VERSION;
+            $remote_info = $this->updater->get_remote_version();
+            
+            if ($remote_info && version_compare($current_version, $remote_info->version, '<')) {
+                wp_send_json_success(array(
+                    'update_available' => true,
+                    'version' => $remote_info->version,
+                    'current_version' => $current_version
+                ));
+            } else {
+                wp_send_json_success(array(
+                    'update_available' => false,
+                    'version' => $current_version,
+                    'current_version' => $current_version
+                ));
+            }
+        } else {
+            wp_send_json_error('Sistema de actualizaciones no disponible');
+        }
+    }
+    
+    /**
+     * AJAX: Estado de actualización
+     */
+    public function ajax_update_status() {
+        if (!current_user_can('manage_options')) {
+            wp_die('Acceso denegado');
+        }
+        
+        if (!wp_verify_nonce($_POST['nonce'], 'visor_pdf_update_status')) {
+            wp_die('Acceso denegado');
+        }
+        
+        $current_version = VISOR_PDF_CRISMAN_VERSION;
+        $response_data = array(
+            'current_version' => $current_version,
+            'update_available' => false,
+            'latest_version' => null,
+            'update_url' => admin_url('plugins.php')
+        );
+        
+        if ($this->updater && method_exists($this->updater, 'get_remote_version')) {
+            $remote_info = $this->updater->get_remote_version();
+            
+            if ($remote_info) {
+                $response_data['latest_version'] = $remote_info->version;
+                $response_data['update_available'] = version_compare($current_version, $remote_info->version, '<');
+            }
+        }
+        
+        wp_send_json_success($response_data);
+    }
+    
+    /**
      * Métodos de utilidad
      */
     private function get_actas_for_hybrid($atts) {
@@ -1032,7 +1161,7 @@ class VisorPDFCrisman {
             return $plugin_template;
         }
         
-        return VISOR_PDF_CRISMAN_PLUGIN_DIR . 'templates/viewer-hybrid.php'; // FALLBACK AL HÍBRIDO
+        return VISOR_PDF_CRISMAN_PLUGIN_DIR . 'templates/viewer.php';
     }
     
     private function render_acta_card($acta) {
