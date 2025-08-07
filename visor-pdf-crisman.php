@@ -73,6 +73,7 @@ class VisorPDFCrisman {
      */
     private function init_hooks() {
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_scripts'));
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
         add_action('admin_menu', array($this, 'admin_menu'));
         
         // Agregar enlace de configuración en la lista de plugins
@@ -118,6 +119,7 @@ class VisorPDFCrisman {
         // AJAX para sistema de actualizaciones
         add_action('wp_ajax_visor_pdf_check_update', array($this, 'ajax_check_update'));
         add_action('wp_ajax_visor_pdf_update_status', array($this, 'ajax_update_status'));
+        add_action('wp_ajax_visor_pdf_force_update_check', array($this, 'ajax_force_update_check'));
         
         // Widget en dashboard
         add_action('wp_dashboard_setup', array($this, 'add_dashboard_widget'));
@@ -400,11 +402,13 @@ class VisorPDFCrisman {
     }
     
     /**
-     * Agregar enlace de configuración en la lista de plugins
+     * Agregar enlaces de configuración y comprobar actualizaciones en la lista de plugins
      */
     public function add_settings_link($links) {
         $settings_link = '<a href="' . admin_url('admin.php?page=visor-pdf-crisman') . '">' . __('Configuración', 'visor-pdf-crisman') . '</a>';
-        array_unshift($links, $settings_link);
+        $update_check_link = '<a href="#" id="visor-pdf-check-updates" style="color: #0073aa;">' . __('Comprobar actualizaciones', 'visor-pdf-crisman') . '</a>';
+        
+        array_unshift($links, $settings_link, $update_check_link);
         return $links;
     }
     
@@ -559,6 +563,56 @@ class VisorPDFCrisman {
                 }, 100);
             });
         ', 'after');
+    }
+    
+    /**
+     * Scripts de administración
+     */
+    public function enqueue_admin_scripts($hook) {
+        // Solo cargar en la página de plugins
+        if ($hook !== 'plugins.php') {
+            return;
+        }
+        
+        // JavaScript inline para manejar el enlace de comprobar actualizaciones
+        wp_add_inline_script('jquery', '
+            jQuery(document).ready(function($) {
+                $("#visor-pdf-check-updates").on("click", function(e) {
+                    e.preventDefault();
+                    
+                    var $link = $(this);
+                    var originalText = $link.text();
+                    
+                    // Cambiar texto mientras procesa
+                    $link.text("Comprobando...").css("color", "#999");
+                    
+                    $.ajax({
+                        url: ajaxurl,
+                        type: "POST",
+                        data: {
+                            action: "visor_pdf_force_update_check"
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                alert(response.data.message);
+                                if (response.data.reload) {
+                                    location.reload();
+                                }
+                            } else {
+                                alert("Error: " + (response.data || "Error desconocido"));
+                            }
+                        },
+                        error: function() {
+                            alert("Error de conexión. Intente nuevamente.");
+                        },
+                        complete: function() {
+                            // Restaurar texto original
+                            $link.text(originalText).css("color", "#0073aa");
+                        }
+                    });
+                });
+            });
+        ');
     }
     
     /**
@@ -1147,6 +1201,44 @@ class VisorPDFCrisman {
         }
         
         wp_send_json_success($response_data);
+    }
+    
+    /**
+     * AJAX: Forzar verificación de actualizaciones desde plugins
+     */
+    public function ajax_force_update_check() {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Acceso denegado');
+        }
+        
+        // Limpiar transients para forzar verificación
+        delete_site_transient('update_plugins');
+        delete_transient('visor_pdf_update_info');
+        
+        // Limpiar caché de plugins
+        wp_clean_plugins_cache();
+        
+        // Verificar si hay actualizaciones disponibles
+        $has_update = false;
+        $update_message = 'No hay actualizaciones disponibles';
+        
+        if ($this->updater && method_exists($this->updater, 'get_remote_version')) {
+            $current_version = VISOR_PDF_CRISMAN_VERSION;
+            $remote_info = $this->updater->get_remote_version();
+            
+            if ($remote_info && version_compare($current_version, $remote_info->version, '<')) {
+                $has_update = true;
+                $update_message = "¡Actualización disponible! Versión {$remote_info->version}";
+            } else {
+                $update_message = 'Está usando la última versión';
+            }
+        }
+        
+        wp_send_json_success(array(
+            'has_update' => $has_update,
+            'message' => $update_message,
+            'reload' => true // Recarga la página para mostrar el enlace de actualización
+        ));
     }
     
     /**
