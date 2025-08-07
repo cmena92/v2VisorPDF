@@ -1,0 +1,47 @@
+{
+  "version": "2.0.2",
+  "download_url": "https://github.com/cmena92/v2VisorPDF/archive/refs/tags/v2.0.2.zip",
+  "homepage": "https://github.com/cmena92/v2VisorPDF",
+  "body": "### Versión 2.0.2\n\n#### ✨ Nuevas características:\n- Enlace directo 'Configuración' en lista de plugins\n- Sistema de actualizaciones GitHub totalmente funcional\n- Carga robusta de dependencias con archivos opcionales\n- Documentación técnica completa (CLAUDE.md)\n\n#### 🐛 Correcciones críticas:\n- Solucionado error fatal por archivos faltantes\n- Frontend_Navigation marcado como módulo opcional\n- [actas_hybrid] funciona independientemente\n- Mejor manejo de errores en carga de clases\n\n#### 🔧 Mejoras técnicas:\n- Verificación file_exists() antes de require_once\n- Logging detallado de archivos faltantes\n- Degradación elegante cuando faltan módulos opcionales\n- Auto-actualización configurada para GitHub\n\n#### 📋 Requisitos:\n- WordPress 5.0+\n- PHP 7.4+\n- Extensión Imagick de PHP",
+  "tested": "6.4",
+  "requires_php": "7.4",
+  "requires": "5.0",
+  "author": "Crisman",
+  "author_homepage": "https://tu-sitio-web.com",
+  "changelog": {
+    "2.0.2": [
+      "Enlace 'Configuración' en lista de plugins",
+      "Sistema de actualizaciones GitHub funcional",
+      "Solucionado error fatal por archivos faltantes",
+      "Frontend_Navigation como módulo opcional",
+      "Documentación técnica completa (CLAUDE.md)",
+      "Carga robusta con verificación de archivos"
+    ],
+    "2.0.1": [
+      "Sistema de actualización automática",
+      "Corrección del error al cerrar modal",
+      "Mejoras en gestión de memoria",
+      "Interfaz de configuración de actualizaciones"
+    ],
+    "2.0.0": [
+      "Sistema híbrido de visualización",
+      "Navegación por carpetas mejorada",
+      "Analytics avanzado",
+      "Mejoras de seguridad"
+    ],
+    "1.0.0": [
+      "Versión inicial",
+      "Visualización segura de PDFs",
+      "Sistema de marcas de agua",
+      "Control de acceso por número de colegiado"
+    ]
+  },
+  "banners": {
+    "low": "https://tu-servidor.com/banners/banner-772x250.png",
+    "high": "https://tu-servidor.com/banners/banner-1544x500.png"
+  },
+  "icons": {
+    "1x": "https://tu-servidor.com/icons/icon-128x128.png",
+    "2x": "https://tu-servidor.com/icons/icon-256x256.png"
+  }
+}

@@ -1,9 +1,9 @@
 <?php
 /**
  * Plugin Name: Visor PDF Crisman
- * Plugin URI: https://github.com/tu-usuario/visor-pdf-crisman
+ * Plugin URI: https://github.com/cmena92/v2VisorPDF
  * Description: Sistema seguro para cargar, visualizar y controlar acceso a actas PDF con marcas de agua - CORREGIDO
- * Version: 2.0.1
+ * Version: 2.0.2
  * Author: Crisman
  * Author URI: https://tu-sitio-web.com
  * License: GPL v2 or later
@@ -12,7 +12,7 @@
  * Domain Path: /languages
  * Requires at least: 5.0
  * Requires PHP: 7.4
- * Update URI: https://github.com/tu-usuario/visor-pdf-crisman
+ * Update URI: https://github.com/cmena92/v2VisorPDF
  */
 
 // Prevenir acceso directo
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Definir constantes del plugin
-define('VISOR_PDF_CRISMAN_VERSION', '2.0.1');
+define('VISOR_PDF_CRISMAN_VERSION', '2.0.2');
 define('VISOR_PDF_CRISMAN_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('VISOR_PDF_CRISMAN_PLUGIN_URL', plugin_dir_url(__FILE__));
 

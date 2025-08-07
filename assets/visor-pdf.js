@@ -1,4 +1,4 @@
-// Visor PDF Crisman - JavaScript Mejorado (VERSION 2.0.2 - CON BOTÓN CERRAR PROMINENTE)
+// Visor PDF Crisman - JavaScript Mejorado (CON BOTÓN CERRAR PROMINENTE)
 jQuery(document).ready(function($) {
     
     class VisorPDFCrisman {
@@ -8,7 +8,6 @@ jQuery(document).ready(function($) {
             this.totalPages = 1;
             this.isLoading = false;
             this.zoomLevel = 1;
-            this.currentImageURL = null; // CORRECCIÓN: Variable para gestionar ObjectURL
             this.init();
         }
         
@@ -18,12 +17,11 @@ jQuery(document).ready(function($) {
         }
         
         bindEvents() {
-            // Abrir acta - Botón desktop y móvil
-            $(document).on('click', '.ver-acta-btn, .ver-acta-btn-mobile', (e) => {
+            // Abrir acta
+            $(document).on('click', '.ver-acta-btn', (e) => {
                 e.preventDefault();
                 const actaId = $(e.target).data('acta-id');
                 const totalPages = $(e.target).data('total-pages');
-                console.log('📱 Abriendo acta desde botón:', e.target.className, 'Acta ID:', actaId);
                 this.openActa(actaId, totalPages);
             });
             
@@ -48,14 +46,14 @@ jQuery(document).ready(function($) {
                 }
             });
             
-            // Cerrar modal - SIMPLIFICADO para botón con onclick
-            $(document).on('click', '.close-modal, .close-modal-backup, .modal-overlay', (e) => {
+            // Cerrar modal - ACTUALIZADO para incluir nuevo botón prominente
+            $(document).on('click', '.close-modal, .close-modal-center, .close-modal-prominent, .modal-overlay', (e) => {
                 if (e.target === e.currentTarget || 
                     e.target.classList.contains('close-modal') || 
-                    e.target.classList.contains('close-modal-backup') ||
+                    e.target.classList.contains('close-modal-center') ||
+                    e.target.classList.contains('close-modal-prominent') ||
                     e.target.classList.contains('close-icon') ||
                     e.target.classList.contains('close-text')) {
-                    console.log('🔴 Cerrando modal desde botón secundario:', e.target.className);
                     this.closeModal();
                 }
             });
@@ -111,7 +109,6 @@ jQuery(document).ready(function($) {
         
         setupModal() {
             if ($('#actas-modal').length === 0) {
-                console.log('🔧 Creando modal con botón cerrar prominente mejorado...');
                 const modalHtml = `
                     <div id="actas-modal" class="actas-modal" style="display: none;">
                         <div class="modal-overlay"></div>
@@ -140,7 +137,7 @@ jQuery(document).ready(function($) {
                                         </div>
                                     </div>
                                     <div class="controls-right">
-                                        <button class="close-modal-backup" title="Cerrar visor">
+                                        <button class="close-modal-prominent" title="Cerrar visor">
                                             <span class="close-icon">✕</span>
                                             <span class="close-text">Cerrar</span>
                                         </button>
@@ -162,67 +159,6 @@ jQuery(document).ready(function($) {
                     </div>
                 `;
                 $('body').append(modalHtml);
-                
-                // CREAR BOTÓN CERRAR FIJO FUERA DEL MODAL (SIEMPRE VISIBLE)
-                const closeButtonHtml = `
-                    <button id="actas-close-button-fixed" 
-                            title="Cerrar visor y volver a la lista" 
-                            onclick="window.visorPDFCrisman.closeModal()" 
-                            onmouseover="this.style.background='#c82333'; this.style.transform='scale(1.05)';" 
-                            onmouseout="this.style.background='#dc3545'; this.style.transform='scale(1)';" 
-                            style="
-                                position: fixed !important;
-                                top: 20px !important;
-                                right: 20px !important;
-                                z-index: 999999 !important;
-                                background: #dc3545 !important;
-                                color: white !important;
-                                border: 2px solid white !important;
-                                border-radius: 25px !important;
-                                padding: 12px 24px !important;
-                                cursor: pointer !important;
-                                font-size: 18px !important;
-                                font-weight: bold !important;
-                                display: none !important;
-                                align-items: center !important;
-                                gap: 8px !important;
-                                min-width: 140px !important;
-                                min-height: 50px !important;
-                                justify-content: center !important;
-                                font-family: Arial, sans-serif !important;
-                                text-align: center !important;
-                                line-height: 1.2 !important;
-                                box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
-                                transition: all 0.3s ease !important;
-                            ">
-                        ✕ Cerrar
-                    </button>
-                `;
-                $('body').append(closeButtonHtml);
-                
-                console.log('🎨 Botón con estilos inline directo creado');
-                
-                // VERIFICAR BOTÓN CERRAR FIJO
-                const closeBtn = $('#actas-close-button-fixed');
-                
-                if (closeBtn.length > 0) {
-                    console.log('✅ Botón cerrar fijo encontrado:', closeBtn.length);
-                    console.log('📦 Dimensiones del botón:', closeBtn.outerWidth() + 'x' + closeBtn.outerHeight());
-                    console.log('🎨 Estilos aplicados correctamente');
-                    
-                    // Borde temporal para debugging visual (solo si está visible)
-                    setTimeout(() => {
-                        if (closeBtn.is(':visible')) {
-                            closeBtn.css('border', '3px solid yellow');
-                            setTimeout(() => {
-                                closeBtn.css('border', '2px solid white');
-                            }, 2000);
-                        }
-                    }, 100);
-                } else {
-                    console.error('❌ Botón .close-modal-prominent-fixed NO encontrado');
-                }
-                
                 console.log('✅ Modal del visor creado con botón prominente incluido');
             } else {
                 console.log('ℹ️ Modal del visor ya existe');
@@ -237,35 +173,13 @@ jQuery(document).ready(function($) {
             this.currentPage = 1;
             this.zoomLevel = 1;
             
-            // Mostrar modal
             $('#actas-modal').show();
-            
-            // MOSTRAR BOTÓN CERRAR FIJO
-            const closeBtn = $('#actas-close-button-fixed');
-            if (closeBtn.length > 0) {
-                closeBtn.css('display', 'flex');
-                console.log('🔴 Botón cerrar fijo mostrado');
-                
-                // Verificar dimensiones ahora que está visible
-                setTimeout(() => {
-                    console.log('📦 Dimensiones botón (ahora visible):', closeBtn.outerWidth() + 'x' + closeBtn.outerHeight());
-                    console.log('🔍 Botón visible?', closeBtn.is(':visible'));
-                    
-                    // Borde de debugging amarillo por 2 segundos
-                    closeBtn.css('border', '3px solid yellow');
-                    setTimeout(() => {
-                        closeBtn.css('border', '2px solid white');
-                    }, 2000);
-                }, 200);
-            } else {
-                console.error('❌ Botón fijo no encontrado al abrir modal');
-                // Crear botón de emergencia
-                this.ensureCloseButton();
-            }
-            
             $('.total-pages').text(totalPages);
             $('.page-input').attr('max', totalPages);
             $('.zoom-level').text('100%');
+            
+            // *** FORZAR CREACIÓN DEL BOTÓN DE CERRAR PROMINENTE ***
+            this.ensureCloseButton();
             
             // Asegurar que el contenedor tenga el tamaño correcto
             setTimeout(() => {
@@ -320,100 +234,52 @@ jQuery(document).ready(function($) {
                 xhrFields: {
                     responseType: 'blob'
                 },
-                success: (blob, textStatus, xhr) => {
-                    console.log('📦 Respuesta AJAX recibida:', {
-                        tipo: typeof blob,
-                        esBlob: blob instanceof Blob,
-                        tamaño: blob ? blob.size : 'N/A',
-                        contentType: xhr.getResponseHeader('Content-Type')
-                    });
-                    
-                    // VALIDACIÓN ROBUSTA DEL BLOB
-                    if (!(blob instanceof Blob)) {
-                        console.error('❌ Error: Respuesta no es un objeto Blob válido:', blob);
-                        this.showError('Error: Respuesta del servidor inválida');
-                        $('.loading-indicator').hide();
-                        this.isLoading = false;
-                        return;
+                success: (blob) => {
+                    // Limpiar URL anterior si existe
+                    if (window.currentBlobUrl) {
+                        URL.revokeObjectURL(window.currentBlobUrl);
                     }
                     
-                    if (blob.size === 0) {
-                        console.error('❌ Error: Blob vacío recibido');
-                        this.showError('Error: Archivo vacío recibido del servidor');
-                        $('.loading-indicator').hide();
-                        this.isLoading = false;
-                        return;
-                    }
+                    // Crear nueva URL
+                    const imageUrl = URL.createObjectURL(blob);
+                    window.currentBlobUrl = imageUrl;
                     
-                    try {
-                        // CORRECCIÓN: Limpiar ObjectURL anterior antes de crear uno nuevo
-                        if (this.currentImageURL) {
-                            URL.revokeObjectURL(this.currentImageURL);
-                            console.log('🗑️ ObjectURL anterior liberado');
-                        }
-                        
-                        const imageUrl = URL.createObjectURL(blob);
-                        this.currentImageURL = imageUrl; // CORRECCIÓN: Guardar referencia
-                        console.log('✅ ObjectURL creado y guardado:', imageUrl);
-                        
-                        $('.pdf-page-image')
-                            .attr('src', imageUrl)
-                            .show()
-                            .on('load', () => {
-                                console.log('✅ Imagen cargada exitosamente');
-                                $('.loading-indicator').hide();
-                                this.isLoading = false;
-                                
-                                // Asegurar que el documento se muestre desde arriba
-                                const $container = $('.pdf-page-display');
-                                $container.scrollTop(0);
-                                
-                                // Asegurar que el scroll funcione
-                                $container.css({
-                                    'overflow': 'auto',
-                                    'pointer-events': 'auto'
-                                });
-                                
-                                // Aplicar el zoom actual
-                                if (this.zoomLevel !== 1) {
-                                    this.applyZoom();
-                                }
-                                
-                                // CORRECCIÓN: No liberar automáticamente, se hace en closeModal()
-                            })
-                            .on('error', () => {
-                                console.error('❌ Error al cargar la imagen en el elemento IMG');
-                                this.showError('Error al mostrar la imagen');
-                                $('.loading-indicator').hide();
-                                this.isLoading = false;
-                                URL.revokeObjectURL(imageUrl);
+                    // Remover handlers anteriores para evitar múltiples llamadas
+                    $('.pdf-page-image').off('load').off('error');
+                    
+                    $('.pdf-page-image')
+                        .attr('src', imageUrl)
+                        .show()
+                        .on('load', () => {
+                            $('.loading-indicator').hide();
+                            this.isLoading = false;
+                            
+                            // Asegurar que el documento se muestre desde arriba
+                            const $container = $('.pdf-page-display');
+                            $container.scrollTop(0);
+                            
+                            // Asegurar que el scroll funcione
+                            $container.css({
+                                'overflow': 'auto',
+                                'pointer-events': 'auto'
                             });
-                    } catch (error) {
-                        console.error('❌ Error al crear ObjectURL:', error);
-                        this.showError('Error al procesar la imagen: ' + error.message);
-                        $('.loading-indicator').hide();
-                        this.isLoading = false;
-                    }
+                            
+                            // Aplicar el zoom actual
+                            if (this.zoomLevel !== 1) {
+                                this.applyZoom();
+                            }
+                        })
+                        .on('error', () => {
+                            // Solo mostrar error si el modal está abierto
+                            if (this.currentActa) {
+                                console.error('Error al cargar la imagen del PDF');
+                                this.showError('Error al mostrar la imagen');
+                            }
+                        });
                 },
                 error: (xhr, status, error) => {
-                    console.error('❌ Error AJAX completo:', {
-                        status: status,
-                        error: error,
-                        responseStatus: xhr.status,
-                        responseText: xhr.responseText ? xhr.responseText.substring(0, 500) : 'N/A',
-                        contentType: xhr.getResponseHeader('Content-Type')
-                    });
-                    
-                    let errorMessage = 'Error al cargar la página';
-                    if (xhr.status === 404) {
-                        errorMessage = 'Página no encontrada (404)';
-                    } else if (xhr.status === 403) {
-                        errorMessage = 'Acceso denegado (403)';
-                    } else if (xhr.status === 500) {
-                        errorMessage = 'Error interno del servidor (500)';
-                    }
-                    
-                    this.showError(errorMessage + ' - Código: ' + xhr.status);
+                    console.error('Error loading page:', error);
+                    this.showError('Error al cargar la página');
                     $('.loading-indicator').hide();
                     this.isLoading = false;
                 }
@@ -424,89 +290,57 @@ jQuery(document).ready(function($) {
         }
         
         closeModal() {
-            console.log('🔴 Cerrando modal del visor...');
+            // Remover handlers de error antes de limpiar la imagen
+            $('.pdf-page-image').off('error');
             
-            // CORRECCIÓN: Limpiar ObjectURL antes de cambiar src para evitar el error
-            if (this.currentImageURL) {
-                URL.revokeObjectURL(this.currentImageURL);
-                console.log('🗑️ ObjectURL liberado correctamente al cerrar');
-                this.currentImageURL = null;
-            }
-            
-            // Ocultar modal
+            // Ocultar el modal
             $('#actas-modal').hide();
             
-            // OCULTAR BOTÓN CERRAR FIJO
-            const closeBtn = $('#actas-close-button-fixed');
-            if (closeBtn.length > 0) {
-                closeBtn.css('display', 'none');
-                console.log('✅ Botón cerrar fijo ocultado');
+            // Limpiar la imagen usando about:blank para evitar errores
+            const $img = $('.pdf-page-image');
+            if ($img.length) {
+                // Primero ocultar la imagen
+                $img.hide();
+                // Luego limpiar el src de forma segura
+                $img.attr('src', 'about:blank');
             }
             
-            // CORRECCIÓN: Limpiar imagen después de liberar ObjectURL
-            $('.pdf-page-image').attr('src', '').hide();
+            // Resetear variables
             this.currentActa = null;
             this.currentPage = 1;
+            this.zoomLevel = 1;
+            
+            // Detener heartbeat
             this.stopHeartbeat();
             
-            console.log('✅ Modal cerrado completamente sin errores');
+            // Limpiar cualquier URL blob en memoria
+            if (window.currentBlobUrl) {
+                URL.revokeObjectURL(window.currentBlobUrl);
+                window.currentBlobUrl = null;
+            }
         }
         
         /**
          * Asegurar que el botón de cerrar prominente exista
          */
         ensureCloseButton() {
-            // Verificar botón fijo prominente por ID
-            if ($('#actas-close-button-fixed').length === 0) {
-                console.log('🔧 Creando botón cerrar fijo de emergencia...');
-                
-                const emergencyButtonHtml = `
-                    <button id="actas-close-button-fixed" class="close-modal-prominent-fixed" 
-                            title="Cerrar visor y volver a la lista" style="
-                        position: fixed !important;
-                        top: 20px !important;
-                        right: 20px !important;
-                        z-index: 999999 !important;
-                        background: #dc3545 !important;
-                        color: white !important;
-                        border: 2px solid white !important;
-                        border-radius: 25px !important;
-                        padding: 12px 24px !important;
-                        cursor: pointer !important;
-                        font-size: 18px !important;
-                        font-weight: bold !important;
-                        display: none !important;
-                        align-items: center !important;
-                        gap: 8px !important;
-                        min-width: 140px !important;
-                        min-height: 50px !important;
-                        justify-content: center !important;
-                    ">
-                        <span class="close-icon-prominent">✕</span>
-                        <span class="close-text-prominent">Cerrar</span>
-                    </button>
-                `;
-                
-                $('body').append(emergencyButtonHtml);
-                console.log('✅ Botón de emergencia creado');
-            } else {
-                console.log('✅ Botón cerrar fijo ya existe (ID: actas-close-button-fixed)');
-            }
-            
-            // Verificar botón de respaldo en controles
             const $controlsRight = $('.controls-right');
-            if ($controlsRight.length > 0 && $controlsRight.find('.close-modal-backup').length === 0) {
-                console.log('🔧 Agregando botón de respaldo...');
+            
+            // Verificar si ya existe el botón
+            if ($controlsRight.find('.close-modal-prominent').length === 0) {
+                console.log('🔴 Agregando botón de cerrar prominente...');
                 
-                const backupButtonHtml = `
-                    <button class="close-modal-backup" title="Cerrar visor">
+                const closeButtonHtml = `
+                    <button class="close-modal-prominent" title="Cerrar visor">
                         <span class="close-icon">✕</span>
                         <span class="close-text">Cerrar</span>
                     </button>
                 `;
                 
-                $controlsRight.append(backupButtonHtml);
-                console.log('✅ Botón de respaldo agregado');
+                $controlsRight.html(closeButtonHtml);
+                console.log('✅ Botón de cerrar prominente agregado exitosamente');
+            } else {
+                console.log('✅ Botón de cerrar prominente ya existe');
             }
         }
         
@@ -666,40 +500,6 @@ jQuery(document).ready(function($) {
             return {
                 numeroColegiad: numeroColegiad
             };
-        
-        // FUNCIÓN DE EMERGENCIA PARA FORZAR BOTÓN CERRAR
-        window.forceCloseButton = function() {
-            setTimeout(() => {
-                const closeBtn = $('.close-modal-prominent');
-                if (closeBtn.length > 0) {
-                    closeBtn.css({
-                        'position': 'absolute !important',
-                        'top': '15px !important',
-                        'right': '15px !important',
-                        'z-index': '10001 !important',
-                        'background': '#dc3545 !important',
-                        'color': 'white !important',
-                        'border': 'none !important',
-                        'border-radius': '8px !important',
-                        'padding': '12px 20px !important',
-                        'cursor': 'pointer !important',
-                        'font-size': '16px !important',
-                        'font-weight': '600 !important',
-                        'display': 'flex !important',
-                        'align-items': 'center !important',
-                        'gap': '8px !important',
-                        'box-shadow': '0 4px 12px rgba(220, 53, 69, 0.4) !important',
-                        'min-width': '100px !important',
-                        'justify-content': 'center !important'
-                    });
-                    closeBtn.show();
-                    console.log('🚑 EMERGENCIA: Botón cerrar forzado!', closeBtn);
-                    return true;
-                }
-                console.error('❌ EMERGENCIA: Botón no encontrado');
-                return false;
-            }, 50);
-        };
         }
     }
     
