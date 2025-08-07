@@ -127,15 +127,26 @@ class VisorPDFCrisman {
      * Cargar dependencias
      */
     private function load_dependencies() {
-        require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/install-utils.php';
-        require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/security-config.php';
-        require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-visor-core.php';
-        require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-folders-manager.php';
-        require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-mass-upload.php';
-        require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-frontend-navigation.php';
-        require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-analytics.php';
+        $required_files = array(
+            'includes/install-utils.php',
+            'includes/security-config.php',
+            'includes/class-visor-core.php',
+            'includes/class-folders-manager.php',
+            'includes/class-mass-upload.php',
+            'includes/class-frontend-navigation.php',
+            'includes/class-analytics.php'
+        );
         
-        // Cargar sistema de actualizaciones
+        foreach ($required_files as $file) {
+            $file_path = VISOR_PDF_CRISMAN_PLUGIN_DIR . $file;
+            if (file_exists($file_path)) {
+                require_once $file_path;
+            } else {
+                error_log('Visor PDF Crisman: Archivo requerido no encontrado: ' . $file_path);
+            }
+        }
+        
+        // Cargar sistema de actualizaciones (opcional)
         if (file_exists(VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-plugin-updater.php')) {
             require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-plugin-updater.php';
         }
@@ -145,19 +156,32 @@ class VisorPDFCrisman {
      * Inicializar módulos
      */
     private function init_modules() {
-        $this->core = new Visor_PDF_Core();
+        // Inicializar módulo core (esencial)
+        if (class_exists('Visor_PDF_Core')) {
+            $this->core = new Visor_PDF_Core();
+        } else {
+            error_log('Visor PDF Crisman: Clase Visor_PDF_Core no encontrada');
+        }
         
         // Solo cargar módulos de admin en el backend
         if (is_admin()) {
-            $this->folders_manager = new Visor_PDF_Folders_Manager();
-            $this->mass_upload = new Visor_PDF_Mass_Upload();
-            $this->analytics = new Visor_PDF_Analytics();
+            if (class_exists('Visor_PDF_Folders_Manager')) {
+                $this->folders_manager = new Visor_PDF_Folders_Manager();
+            }
+            if (class_exists('Visor_PDF_Mass_Upload')) {
+                $this->mass_upload = new Visor_PDF_Mass_Upload();
+            }
+            if (class_exists('Visor_PDF_Analytics')) {
+                $this->analytics = new Visor_PDF_Analytics();
+            }
         }
         
         // Navegación frontend disponible siempre
-        $this->frontend_navigation = new Visor_PDF_Frontend_Navigation();
+        if (class_exists('Visor_PDF_Frontend_Navigation')) {
+            $this->frontend_navigation = new Visor_PDF_Frontend_Navigation();
+        }
         
-        // Inicializar sistema de actualizaciones
+        // Inicializar sistema de actualizaciones (opcional)
         if (class_exists('Visor_PDF_Plugin_Updater')) {
             $this->updater = new Visor_PDF_Plugin_Updater(__FILE__);
         }
