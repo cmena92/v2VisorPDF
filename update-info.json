@@ -1,14 +1,22 @@
 {
-  "version": "2.0.2",
-  "download_url": "https://github.com/cmena92/v2VisorPDF/archive/refs/tags/v2.0.2.zip",
+  "version": "2.0.3",
+  "download_url": "https://github.com/cmena92/v2VisorPDF/archive/refs/tags/v2.0.3.zip",
   "homepage": "https://github.com/cmena92/v2VisorPDF",
-  "body": "### Versión 2.0.2\n\n#### ✨ Nuevas características:\n- Enlace directo 'Configuración' en lista de plugins\n- Sistema de actualizaciones GitHub totalmente funcional\n- Carga robusta de dependencias con archivos opcionales\n- Documentación técnica completa (CLAUDE.md)\n\n#### 🐛 Correcciones críticas:\n- Solucionado error fatal por archivos faltantes\n- Frontend_Navigation marcado como módulo opcional\n- [actas_hybrid] funciona independientemente\n- Mejor manejo de errores en carga de clases\n\n#### 🔧 Mejoras técnicas:\n- Verificación file_exists() antes de require_once\n- Logging detallado de archivos faltantes\n- Degradación elegante cuando faltan módulos opcionales\n- Auto-actualización configurada para GitHub\n\n#### 📋 Requisitos:\n- WordPress 5.0+\n- PHP 7.4+\n- Extensión Imagick de PHP",
+  "body": "### Versión 2.0.3\n\n#### ✨ Nuevas características:\n- **Botón de cerrar en visor híbrido** - Botón circular rojo en esquina superior derecha\n- **Animaciones mejoradas** - Fade-out suave al cerrar visor híbrido\n- **Limpieza automática de memoria** - Liberación de recursos al cerrar\n- Sistema de actualizaciones GitHub completamente funcional\n\n#### 🐛 Correcciones críticas:\n- **Solucionado error modal** 'Error al mostrar la imagen' al cerrar visor PDF\n- **Manejo robusto de XHR requests** - Cancelación correcta de peticiones pendientes\n- **Prevención de memory leaks** - Limpieza completa de event handlers\n- Frontend_Navigation como módulo opcional (no crítico)\n\n#### 🔧 Mejoras técnicas:\n- **Gestión mejorada del cierre de modal** con flag modalClosing\n- **Verificación de estado** antes de mostrar errores\n- **Scroll automático** al top después de cerrar visor\n- Carga robusta de dependencias con archivos opcionales\n\n#### 🎨 Mejoras de UX:\n- **Botón de cerrar visible y accesible** en visor híbrido\n- **Efectos hover y animaciones** en botón de cerrar\n- **Experiencia de cierre fluida** sin errores molestos\n\n#### 📋 Requisitos:\n- WordPress 5.0+\n- PHP 7.4+ con extensión **Imagick**\n- MySQL 5.7+",
   "tested": "6.4",
   "requires_php": "7.4",
   "requires": "5.0",
   "author": "Crisman",
   "author_homepage": "https://tu-sitio-web.com",
   "changelog": {
+    "2.0.3": [
+      "Botón de cerrar en visor híbrido (esquina superior derecha)",
+      "Solucionado error modal 'Error al mostrar la imagen'",
+      "Animaciones fade-out suaves al cerrar visor",
+      "Manejo robusto de XHR requests con cancelación",
+      "Limpieza automática de memoria y event handlers",
+      "Scroll automático al top después de cerrar"
+    ],
     "2.0.2": [
       "Enlace 'Configuración' en lista de plugins",
       "Sistema de actualizaciones GitHub funcional",
