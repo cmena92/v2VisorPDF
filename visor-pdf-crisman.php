@@ -596,14 +596,21 @@ class VisorPDFCrisman {
                             if (response.success) {
                                 alert(response.data.message);
                                 if (response.data.reload) {
-                                    location.reload();
+                                    setTimeout(function() {
+                                        location.reload();
+                                    }, 1000);
                                 }
                             } else {
-                                alert("Error: " + (response.data || "Error desconocido"));
+                                var errorMsg = "Error al verificar actualizaciones";
+                                if (response.data && typeof response.data === "string") {
+                                    errorMsg = response.data;
+                                }
+                                alert(errorMsg);
                             }
                         },
-                        error: function() {
-                            alert("Error de conexión. Intente nuevamente.");
+                        error: function(xhr, status, error) {
+                            console.error("Error AJAX:", status, error);
+                            alert("Error de conexión al verificar actualizaciones. Por favor, intente nuevamente.");
                         },
                         complete: function() {
                             // Restaurar texto original
@@ -1211,34 +1218,54 @@ class VisorPDFCrisman {
             wp_send_json_error('Acceso denegado');
         }
         
-        // Limpiar transients para forzar verificación
-        delete_site_transient('update_plugins');
-        delete_transient('visor_pdf_update_info');
-        
-        // Limpiar caché de plugins
-        wp_clean_plugins_cache();
-        
-        // Verificar si hay actualizaciones disponibles
-        $has_update = false;
-        $update_message = 'No hay actualizaciones disponibles';
-        
-        if ($this->updater && method_exists($this->updater, 'get_remote_version')) {
-            $current_version = VISOR_PDF_CRISMAN_VERSION;
-            $remote_info = $this->updater->get_remote_version();
+        try {
+            // Limpiar transients para forzar verificación
+            delete_site_transient('update_plugins');
+            delete_transient('visor_pdf_update_info');
             
-            if ($remote_info && version_compare($current_version, $remote_info->version, '<')) {
-                $has_update = true;
-                $update_message = "¡Actualización disponible! Versión {$remote_info->version}";
+            // Limpiar caché de plugins
+            wp_clean_plugins_cache();
+            
+            // Verificar si hay actualizaciones disponibles
+            $has_update = false;
+            $update_message = 'No hay actualizaciones disponibles';
+            
+            if ($this->updater && method_exists($this->updater, 'get_remote_version')) {
+                $current_version = VISOR_PDF_CRISMAN_VERSION;
+                $remote_info = $this->updater->get_remote_version();
+                
+                if ($remote_info === false) {
+                    wp_send_json_success(array(
+                        'has_update' => false,
+                        'message' => 'No se pudo conectar con el servidor de actualizaciones. Por favor, intente más tarde.',
+                        'reload' => false
+                    ));
+                    return;
+                }
+                
+                if ($remote_info && isset($remote_info->version)) {
+                    if (version_compare($current_version, $remote_info->version, '<')) {
+                        $has_update = true;
+                        $update_message = "¡Actualización disponible! Versión {$remote_info->version}";
+                    } else {
+                        $update_message = "Está usando la última versión ({$current_version})";
+                    }
+                } else {
+                    $update_message = 'No se pudo obtener información de versión del servidor';
+                }
             } else {
-                $update_message = 'Está usando la última versión';
+                $update_message = 'El sistema de actualizaciones no está disponible';
             }
+            
+            wp_send_json_success(array(
+                'has_update' => $has_update,
+                'message' => $update_message,
+                'reload' => $has_update // Solo recargar si hay actualización
+            ));
+            
+        } catch (Exception $e) {
+            wp_send_json_error('Error al verificar actualizaciones: ' . $e->getMessage());
         }
-        
-        wp_send_json_success(array(
-            'has_update' => $has_update,
-            'message' => $update_message,
-            'reload' => true // Recarga la página para mostrar el enlace de actualización
-        ));
     }
     
     /**

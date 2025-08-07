@@ -80,7 +80,7 @@ class Visor_PDF_Plugin_Updater {
     /**
      * Obtener información de versión remota
      */
-    private function get_remote_version() {
+    public function get_remote_version() {
         // Intentar obtener desde caché
         $cache_key = 'visor_pdf_update_info';
         $cached = get_transient($cache_key);

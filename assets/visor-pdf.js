@@ -136,6 +136,7 @@ jQuery(document).ready(function($) {
                                             <span class="zoom-level">100%</span>
                                             <button class="zoom-in" title="Acercar">🔍+</button>
                                             <button class="zoom-fit" title="Ajustar">📐</button>
+                                            <button class="close-modal-center" title="Cerrar visor">✕ Cerrar</button>
                                         </div>
                                     </div>
                                     <div class="controls-right">
@@ -353,8 +354,9 @@ jQuery(document).ready(function($) {
          */
         ensureCloseButton() {
             const $controlsRight = $('.controls-right');
+            const $zoomControls = $('.zoom-controls');
             
-            // Verificar si ya existe el botón
+            // Verificar botón en controls-right
             if ($controlsRight.find('.close-modal-prominent').length === 0) {
                 console.log('🔴 Agregando botón de cerrar prominente...');
                 
@@ -369,6 +371,17 @@ jQuery(document).ready(function($) {
                 console.log('✅ Botón de cerrar prominente agregado exitosamente');
             } else {
                 console.log('✅ Botón de cerrar prominente ya existe');
+            }
+            
+            // Verificar botón en controls-center (zoom-controls)
+            if ($zoomControls.find('.close-modal-center').length === 0) {
+                console.log('🔴 Agregando botón de cerrar en controles centrales...');
+                
+                const closeCenterBtn = `<button class="close-modal-center" title="Cerrar visor">✕ Cerrar</button>`;
+                $zoomControls.append(closeCenterBtn);
+                console.log('✅ Botón de cerrar central agregado exitosamente');
+            } else {
+                console.log('✅ Botón de cerrar central ya existe');
             }
         }
         
