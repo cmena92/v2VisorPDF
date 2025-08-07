@@ -8,6 +8,8 @@ jQuery(document).ready(function($) {
             this.totalPages = 1;
             this.isLoading = false;
             this.zoomLevel = 1;
+            this.modalClosing = false;
+            this.currentXHR = null;
             this.init();
         }
         
@@ -222,7 +224,7 @@ jQuery(document).ready(function($) {
             $('.prev-page').prop('disabled', pageNum <= 1);
             $('.next-page').prop('disabled', pageNum >= this.totalPages);
             
-            $.ajax({
+            this.currentXHR = $.ajax({
                 url: actas_ajax.ajax_url,
                 type: 'POST',
                 data: {
@@ -235,6 +237,9 @@ jQuery(document).ready(function($) {
                     responseType: 'blob'
                 },
                 success: (blob) => {
+                    // Limpiar referencia XHR
+                    this.currentXHR = null;
+                    
                     // Limpiar URL anterior si existe
                     if (window.currentBlobUrl) {
                         URL.revokeObjectURL(window.currentBlobUrl);
@@ -270,16 +275,22 @@ jQuery(document).ready(function($) {
                             }
                         })
                         .on('error', () => {
-                            // Solo mostrar error si el modal está abierto
-                            if (this.currentActa) {
+                            // Solo mostrar error si el modal está abierto y NO se está cerrando
+                            if (this.currentActa && !this.modalClosing) {
                                 console.error('Error al cargar la imagen del PDF');
                                 this.showError('Error al mostrar la imagen');
                             }
                         });
                 },
                 error: (xhr, status, error) => {
-                    console.error('Error loading page:', error);
-                    this.showError('Error al cargar la página');
+                    // Limpiar referencia XHR
+                    this.currentXHR = null;
+                    
+                    // Solo mostrar error si no es un abort (cancelación)
+                    if (xhr.statusText !== 'abort') {
+                        console.error('Error loading page:', error);
+                        this.showError('Error al cargar la página');
+                    }
                     $('.loading-indicator').hide();
                     this.isLoading = false;
                 }
@@ -290,22 +301,28 @@ jQuery(document).ready(function($) {
         }
         
         closeModal() {
-            // Remover handlers de error antes de limpiar la imagen
-            $('.pdf-page-image').off('error');
+            // Marcar que el modal está cerrándose para evitar errores
+            this.modalClosing = true;
             
-            // Ocultar el modal
-            $('#actas-modal').hide();
+            // Detener cualquier carga pendiente
+            if (this.currentXHR) {
+                this.currentXHR.abort();
+                this.currentXHR = null;
+            }
             
-            // Limpiar la imagen usando about:blank para evitar errores
+            // Remover TODOS los handlers de eventos de la imagen
             const $img = $('.pdf-page-image');
+            $img.off('load error');
+            
+            // Limpiar la imagen de forma segura
             if ($img.length) {
                 // Primero ocultar la imagen
                 $img.hide();
-                // Luego limpiar el src de forma segura
+                // Limpiar el src para prevenir cargas pendientes
                 $img.attr('src', 'about:blank');
             }
             
-            // Resetear variables
+            // Resetear variables ANTES de ocultar modal
             this.currentActa = null;
             this.currentPage = 1;
             this.zoomLevel = 1;
@@ -318,6 +335,17 @@ jQuery(document).ready(function($) {
                 URL.revokeObjectURL(window.currentBlobUrl);
                 window.currentBlobUrl = null;
             }
+            
+            // Ocultar indicadores de carga
+            $('.loading-indicator').hide();
+            
+            // Ocultar el modal al final
+            $('#actas-modal').hide();
+            
+            // Reset flag después de un breve delay
+            setTimeout(() => {
+                this.modalClosing = false;
+            }, 100);
         }
         
         /**
