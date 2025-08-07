@@ -36,11 +36,6 @@ $carpetas = $all_carpetas;
 
 <div class="actas-viewer-container actas-viewer-hybrid">
 
-<!-- Botón de cerrar visor híbrido -->
-<button class="hybrid-close-btn" title="Cerrar visor" onclick="closeHybridViewer()">
-    <span class="close-icon">✕</span>
-</button>
-
 <!-- Header simplificado sin degradado -->
 <div class="actas-header-simple">
 <div class="header-info">

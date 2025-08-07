@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a WordPress plugin called "Visor PDF Crisman" that provides secure PDF document management with watermarking capabilities for viewing protected documents (actas). The plugin is designed for managing collegiate member documents with access control based on member numbers.
+WordPress plugin "Visor PDF Crisman" v2.0.3 - Secure PDF document management system with watermarking for protected collegiate documents (actas). Uses member numbers (numero_colegiado) for access control.
 
 ## Key Architecture Components
 
@@ -47,6 +47,10 @@ This is a WordPress plugin called "Visor PDF Crisman" that provides secure PDF d
   - Administrative dashboards and metrics
   - Performance tracking and optimization
 
+- **class-plugin-updater.php**: `Visor_PDF_Plugin_Updater` - GitHub update system
+  - Automatic updates from GitHub repository
+  - Version checking and update notifications
+
 ### Database Tables
 - `{prefix}_actas_logs` - Document viewing logs
 - `{prefix}_actas_metadata` - Document metadata and information
@@ -59,6 +63,7 @@ This is a WordPress plugin called "Visor PDF Crisman" that provides secure PDF d
 - Hierarchical folder organization
 - Activity logging and analytics
 - Security features (anti-download protection)
+- GitHub-based auto-updates
 
 ## Development Commands
 
@@ -76,6 +81,9 @@ This is a WordPress plugin called "Visor PDF Crisman" that provides secure PDF d
 php -l visor-pdf-crisman.php
 php -l includes/*.php
 php -l templates/*.php
+
+# Check syntax for all PHP files (utility script available)
+php verificar_sintaxis.php
 ```
 
 ### Testing & Debugging
@@ -130,10 +138,11 @@ Access these debug utilities via WordPress admin (admin only):
 ## Important Considerations
 
 ### Security
-- All PDFs are stored in protected `/wp-content/uploads/actas-pdf/` directory
+- All PDFs stored in protected `/wp-content/uploads/actas-pdf/` directory
 - Access controlled via `.htaccess` rules
 - Watermarks applied on-the-fly with user's member number
 - Extensive activity logging for audit trails
+- Multiple frontend protections (disabled dev tools, right-click, text selection)
 
 ### Requirements
 - **PHP 7.4+** with **Imagick extension** (critical for PDF processing)
@@ -142,10 +151,11 @@ Access these debug utilities via WordPress admin (admin only):
 - Minimum 256MB PHP memory (512MB recommended)
 
 ### Current Development Focus
-Based on recent git changes, the current work involves:
+Based on recent git commits:
 - Table view format for document listings (`acta-table-row.php`)
 - Hybrid viewer improvements
-- CSS styling updates for the PDF viewer interface
+- GitHub auto-update system implementation
+- Modal error handling improvements
 
 ## Module Interaction Patterns
 
@@ -195,3 +205,4 @@ Based on recent git changes, the current work involves:
 - Log all document access attempts to `actas_logs` table
 - Use nonces for AJAX requests to prevent CSRF
 - Sanitize all user inputs with `sanitize_text_field()` and similar functions
+- Never expose direct file paths or allow direct PDF access

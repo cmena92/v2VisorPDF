@@ -691,43 +691,6 @@
     }
 }
 
-/* Botón de cerrar visor híbrido */
-.hybrid-close-btn {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    z-index: 1000;
-    background: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    transition: all 0.3s ease;
-}
-
-.hybrid-close-btn:hover {
-    background: #c82333;
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-}
-
-.hybrid-close-btn:active {
-    transform: scale(0.95);
-}
-
-.hybrid-close-btn .close-icon {
-    font-size: 18px;
-    line-height: 1;
-}
-
 /* Asegurar que el contenedor híbrido tenga posición relativa */
 .actas-viewer-hybrid {
     position: relative;

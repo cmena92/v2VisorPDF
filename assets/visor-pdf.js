@@ -591,26 +591,4 @@ jQuery(document).ready(function($) {
         }
     });
     
-    // Función global para cerrar visor híbrido
-    window.closeHybridViewer = function() {
-        const hybridContainer = $('.actas-viewer-hybrid');
-        if (hybridContainer.length) {
-            // Animación de fade out
-            hybridContainer.fadeOut(300, function() {
-                // Remover completamente el visor del DOM
-                hybridContainer.remove();
-                
-                // Limpiar cualquier evento o memoria relacionada
-                if (window.currentBlobUrl) {
-                    URL.revokeObjectURL(window.currentBlobUrl);
-                    window.currentBlobUrl = null;
-                }
-                
-                // Scroll al top de la página
-                $('html, body').animate({ scrollTop: 0 }, 300);
-                
-                console.log('Visor híbrido cerrado correctamente');
-            });
-        }
-    };
 });
