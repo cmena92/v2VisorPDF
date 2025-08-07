@@ -133,16 +133,30 @@ class VisorPDFCrisman {
             'includes/class-visor-core.php',
             'includes/class-folders-manager.php',
             'includes/class-mass-upload.php',
-            'includes/class-frontend-navigation.php',
             'includes/class-analytics.php'
         );
         
+        $optional_files = array(
+            'includes/class-frontend-navigation.php'
+        );
+        
+        // Cargar archivos requeridos (críticos)
         foreach ($required_files as $file) {
             $file_path = VISOR_PDF_CRISMAN_PLUGIN_DIR . $file;
             if (file_exists($file_path)) {
                 require_once $file_path;
             } else {
-                error_log('Visor PDF Crisman: Archivo requerido no encontrado: ' . $file_path);
+                error_log('Visor PDF Crisman: Archivo REQUERIDO no encontrado: ' . $file_path);
+            }
+        }
+        
+        // Cargar archivos opcionales (no críticos)
+        foreach ($optional_files as $file) {
+            $file_path = VISOR_PDF_CRISMAN_PLUGIN_DIR . $file;
+            if (file_exists($file_path)) {
+                require_once $file_path;
+            } else {
+                error_log('Visor PDF Crisman: Archivo opcional no encontrado: ' . $file_path . ' (algunas funciones estarán limitadas)');
             }
         }
         
@@ -573,7 +587,10 @@ class VisorPDFCrisman {
             return $this->frontend_navigation->shortcode_visual_navigator($atts);
         }
         
-        return '<p class="actas-error">Navegador visual no disponible.</p>';
+        return '<div class="actas-error">
+            <p>⚠️ Navegador visual no disponible.</p>
+            <p><small>Módulo de navegación frontend no se pudo cargar. Use <code>[actas_hybrid]</code> como alternativa.</small></p>
+        </div>';
     }
     
     public function shortcode_actas_hybrid($atts) {
