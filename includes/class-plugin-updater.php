@@ -31,6 +31,9 @@ class Visor_PDF_Plugin_Updater {
         add_action('upgrader_process_complete', array($this, 'purge_transients'), 10, 2);
         add_action('admin_init', array($this, 'setup_update_settings'));
         
+        // Hooks para mostrar actualizaciones en la página de plugins
+        add_action('after_plugin_row_' . $this->plugin_slug, array($this, 'show_update_notification'), 10, 2);
+        
         // Agregar página de configuración
         add_action('admin_menu', array($this, 'add_update_settings_page'));
     }
@@ -52,24 +55,28 @@ class Visor_PDF_Plugin_Updater {
         $remote_version = $this->get_remote_version();
         
         if ($remote_version && version_compare($this->plugin_data['Version'], $remote_version->version, '<')) {
+            $download_url = $this->get_download_url($remote_version->download_url);
+            
             $update_data = array(
+                'id' => $this->plugin_slug,
                 'slug' => dirname($this->plugin_slug),
                 'plugin' => $this->plugin_slug,
                 'new_version' => $remote_version->version,
                 'url' => $remote_version->homepage ?? $this->plugin_data['PluginURI'],
-                'package' => $this->get_download_url($remote_version->download_url),
-                'icons' => array(
-                    '2x' => plugin_dir_url(dirname(__FILE__)) . 'assets/icon-256x256.png',
-                    '1x' => plugin_dir_url(dirname(__FILE__)) . 'assets/icon-128x128.png',
-                ),
-                'banners' => array(
-                    'high' => plugin_dir_url(dirname(__FILE__)) . 'assets/banner-1544x500.png',
-                    'low' => plugin_dir_url(dirname(__FILE__)) . 'assets/banner-772x250.png'
-                ),
-                'tested' => $remote_version->tested ?? '',
+                'package' => $download_url,
+                'icons' => array(),
+                'banners' => array(),
+                'tested' => $remote_version->tested ?? get_bloginfo('version'),
                 'requires_php' => $remote_version->requires_php ?? '7.4',
                 'compatibility' => new stdClass()
             );
+            
+            // Debug logging
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('Visor PDF Updater - Actualización disponible: ' . $remote_version->version);
+                error_log('Visor PDF Updater - Plugin slug: ' . $this->plugin_slug);
+                error_log('Visor PDF Updater - Download URL: ' . $download_url);
+            }
             
             $transient->response[$this->plugin_slug] = (object) $update_data;
         }
@@ -555,5 +562,42 @@ class Visor_PDF_Plugin_Updater {
         });
         </script>
         <?php
+    }
+    
+    /**
+     * Mostrar notificación de actualización en la página de plugins
+     */
+    public function show_update_notification($plugin_file, $plugin_data) {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        
+        $remote_version = $this->get_remote_version();
+        
+        if (!$remote_version || !version_compare($plugin_data['Version'], $remote_version->version, '<')) {
+            return;
+        }
+        
+        $wp_list_table = _get_list_table('WP_Plugins_List_Table');
+        $plugin_name = $plugin_data['Name'];
+        
+        echo '<tr class="plugin-update-tr active" id="' . esc_attr($this->plugin_slug . '-update') . '" data-slug="' . esc_attr(dirname($this->plugin_slug)) . '" data-plugin="' . esc_attr($this->plugin_slug) . '">';
+        echo '<td colspan="' . esc_attr($wp_list_table->get_column_count()) . '" class="plugin-update colspanchange">';
+        echo '<div class="update-message notice inline notice-warning notice-alt">';
+        
+        $update_url = wp_nonce_url(
+            self_admin_url('update.php?action=upgrade-plugin&plugin=') . $this->plugin_slug,
+            'upgrade-plugin_' . $this->plugin_slug
+        );
+        
+        printf(
+            '<p><strong>%s</strong> versión %s está disponible. <a href="%s" class="update-link" aria-label="Actualizar %s ahora">Actualizar ahora</a>.</p>',
+            esc_html($plugin_name),
+            esc_html($remote_version->version),
+            esc_url($update_url),
+            esc_attr($plugin_name)
+        );
+        
+        echo '</div></td></tr>';
     }
 }
