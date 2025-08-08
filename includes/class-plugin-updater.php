@@ -101,7 +101,12 @@ class Visor_PDF_Plugin_Updater {
             $remote_info = $this->get_custom_server_info();
         }
         
-        // Método 3: Archivo JSON en el repositorio
+        // Método 3: GitHub Tags API (fallback si no hay releases)
+        if (!$remote_info && $this->github_username && $this->github_repo) {
+            $remote_info = $this->get_github_tags_info();
+        }
+        
+        // Método 4: Archivo JSON en el repositorio
         if (!$remote_info) {
             $remote_info = $this->get_json_info();
         }
@@ -135,6 +140,10 @@ class Visor_PDF_Plugin_Updater {
         $response = wp_remote_get($api_url, $args);
         
         if (is_wp_error($response)) {
+            // Log del error para debug
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('Visor PDF Updater - Error al obtener release de GitHub: ' . $response->get_error_message());
+            }
             return false;
         }
         
@@ -142,6 +151,10 @@ class Visor_PDF_Plugin_Updater {
         $release = json_decode($body);
         
         if (!isset($release->tag_name)) {
+            // Log para debug
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('Visor PDF Updater - No se encontró release en GitHub: ' . $body);
+            }
             return false;
         }
         
@@ -166,6 +179,57 @@ class Visor_PDF_Plugin_Updater {
             'download_url' => $download_url,
             'homepage' => $release->html_url,
             'body' => $release->body ?? '',
+            'tested' => get_bloginfo('version'),
+            'requires_php' => '7.4'
+        );
+    }
+    
+    /**
+     * Obtener información desde GitHub Tags API (fallback)
+     */
+    private function get_github_tags_info() {
+        $api_url = "https://api.github.com/repos/{$this->github_username}/{$this->github_repo}/tags";
+        
+        $args = array(
+            'timeout' => 10,
+            'headers' => array(
+                'Accept' => 'application/vnd.github.v3+json',
+            )
+        );
+        
+        // Agregar token si está disponible
+        if ($this->access_token) {
+            $args['headers']['Authorization'] = 'token ' . $this->access_token;
+        }
+        
+        $response = wp_remote_get($api_url, $args);
+        
+        if (is_wp_error($response)) {
+            return false;
+        }
+        
+        $body = wp_remote_retrieve_body($response);
+        $tags = json_decode($body);
+        
+        if (!is_array($tags) || empty($tags)) {
+            return false;
+        }
+        
+        // Obtener el primer tag (más reciente)
+        $latest_tag = $tags[0];
+        
+        if (!isset($latest_tag->name)) {
+            return false;
+        }
+        
+        // Crear URL del repositorio para homepage
+        $repo_url = "https://github.com/{$this->github_username}/{$this->github_repo}";
+        
+        return (object) array(
+            'version' => ltrim($latest_tag->name, 'v'),
+            'download_url' => $latest_tag->zipball_url,
+            'homepage' => $repo_url . "/releases/tag/" . $latest_tag->name,
+            'body' => 'Actualización disponible desde GitHub Tags',
             'tested' => get_bloginfo('version'),
             'requires_php' => '7.4'
         );
