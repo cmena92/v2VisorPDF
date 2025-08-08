@@ -415,38 +415,78 @@ class Visor_PDF_Analytics extends Visor_PDF_Core {
     public function upgrade_tables_for_analytics() {
         global $wpdb;
         
-        // Verificar si las columnas ya existen
-        $columns = $wpdb->get_results(
-            "SHOW COLUMNS FROM {$wpdb->prefix}actas_logs LIKE 'device_type'"
+        $table = $wpdb->prefix . 'actas_logs';
+        $columns_added = false;
+        
+        // Lista de columnas a verificar/agregar
+        $columns_to_add = array(
+            'acta_id' => "ADD COLUMN acta_id INT(11) AFTER acta_filename",
+            'device_type' => "ADD COLUMN device_type VARCHAR(20) AFTER user_agent",
+            'browser' => "ADD COLUMN browser VARCHAR(50) AFTER device_type",
+            'session_duration' => "ADD COLUMN session_duration INT(11) AFTER browser",
+            'referrer' => "ADD COLUMN referrer VARCHAR(255) AFTER session_duration"
         );
         
-        if (empty($columns)) {
-            // Agregar nuevas columnas para analytics extendidos
-            $result1 = $wpdb->query(
-                "ALTER TABLE {$wpdb->prefix}actas_logs 
-                 ADD COLUMN acta_id INT(11) AFTER acta_filename,
-                 ADD COLUMN device_type VARCHAR(20) AFTER user_agent,
-                 ADD COLUMN browser VARCHAR(50) AFTER device_type,
-                 ADD COLUMN session_duration INT(11) AFTER browser,
-                 ADD COLUMN referrer VARCHAR(255) AFTER session_duration"
+        // Verificar y agregar cada columna individualmente
+        foreach ($columns_to_add as $column_name => $add_sql) {
+            $column_exists = $wpdb->get_results(
+                "SHOW COLUMNS FROM {$table} LIKE '{$column_name}'"
             );
             
-            if ($result1 !== false) {
-                // Agregar índices para mejor performance (solo si se agregaron las columnas)
-                $wpdb->query(
-                    "ALTER TABLE {$wpdb->prefix}actas_logs 
-                     ADD INDEX idx_acta_id (acta_id),
-                     ADD INDEX idx_device_type (device_type),
-                     ADD INDEX idx_viewed_at (viewed_at)"
-                );
-            }
-            
-            // Log para debug
-            if (defined('WP_DEBUG') && WP_DEBUG && $result1 === false) {
-                error_log('Visor PDF Analytics - Error al agregar columnas: ' . $wpdb->last_error);
+            if (empty($column_exists)) {
+                $result = $wpdb->query("ALTER TABLE {$table} {$add_sql}");
+                
+                if ($result !== false) {
+                    $columns_added = true;
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log("Visor PDF Analytics - Columna agregada: {$column_name}");
+                    }
+                } else {
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
+                        error_log("Visor PDF Analytics - Error al agregar columna {$column_name}: " . $wpdb->last_error);
+                    }
+                }
             }
         }
         
+        // Crear índices si se agregaron columnas o si no existen
+        $this->create_index_if_not_exists('actas_logs', 'idx_acta_id', 'acta_id');
+        $this->create_index_if_not_exists('actas_logs', 'idx_device_type', 'device_type');
+        $this->create_index_if_not_exists('actas_logs', 'idx_viewed_at', 'viewed_at');
+        
         return true;
+    }
+    
+    /**
+     * Crear índice solo si no existe
+     */
+    private function create_index_if_not_exists($table_name, $index_name, $column_name) {
+        global $wpdb;
+        
+        $table = $wpdb->prefix . $table_name;
+        
+        // Verificar si el índice existe
+        $index_exists = $wpdb->get_results(
+            "SHOW INDEX FROM {$table} WHERE Key_name = '{$index_name}'"
+        );
+        
+        if (empty($index_exists)) {
+            // Crear el índice si no existe
+            $result = $wpdb->query(
+                "ALTER TABLE {$table} ADD INDEX {$index_name} ({$column_name})"
+            );
+            
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                if ($result !== false) {
+                    error_log("Visor PDF Analytics - Índice creado: {$index_name} en tabla {$table}");
+                } else {
+                    error_log("Visor PDF Analytics - Error al crear índice {$index_name}: " . $wpdb->last_error);
+                }
+            }
+            
+            return $result;
+        }
+        
+        return true; // El índice ya existe
     }
 }
