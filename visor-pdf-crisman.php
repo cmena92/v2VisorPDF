@@ -3,7 +3,7 @@
  * Plugin Name: Visor PDF Crisman
  * Plugin URI: https://github.com/cmena92/v2VisorPDF
  * Description: Sistema seguro para cargar, visualizar y controlar acceso a actas PDF con marcas de agua - CORREGIDO
- * Version: 2.0.9
+ * Version: 2.1.0
  * Author: Crisman
  * Author URI: https://tu-sitio-web.com
  * License: GPL v2 or later
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Definir constantes del plugin
-define('VISOR_PDF_CRISMAN_VERSION', '2.0.9');
+define('VISOR_PDF_CRISMAN_VERSION', '2.1.0');
 define('VISOR_PDF_CRISMAN_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('VISOR_PDF_CRISMAN_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -84,6 +84,7 @@ class VisorPDFCrisman {
         add_action('wp_enqueue_scripts', array($this, 'enqueue_frontend_scripts'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
         add_action('admin_menu', array($this, 'admin_menu'));
+        add_action('admin_notices', array($this, 'show_update_success_notice'));
         
         // Agregar enlace de configuración en la lista de plugins
         add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'add_settings_link'));
@@ -129,6 +130,7 @@ class VisorPDFCrisman {
         add_action('wp_ajax_visor_pdf_check_update', array($this, 'ajax_check_update'));
         add_action('wp_ajax_visor_pdf_update_status', array($this, 'ajax_update_status'));
         add_action('wp_ajax_visor_pdf_force_update_check', array($this, 'ajax_force_update_check'));
+        add_action('wp_ajax_visor_pdf_dismiss_update_notice', array($this, 'ajax_dismiss_update_notice'));
         
         // Widget en dashboard
         add_action('wp_dashboard_setup', array($this, 'add_dashboard_widget'));
@@ -360,10 +362,66 @@ class VisorPDFCrisman {
         if ($options['type'] === 'plugin' && isset($options['plugins'])) {
             foreach ($options['plugins'] as $plugin) {
                 if ($plugin === plugin_basename(__FILE__)) {
+                    // Ejecutar rutinas de actualización
                     $this->upgrade_analytics_tables();
+                    
+                    // Reactivar el plugin automáticamente después de la actualización
+                    $this->reactivate_after_update();
+                    
+                    // Marcar que se completó una actualización exitosa
+                    set_transient('visor_pdf_crisman_updated', array(
+                        'updated_at' => current_time('mysql'),
+                        'version' => VISOR_PDF_CRISMAN_VERSION,
+                        'previous_version' => get_option('visor_pdf_crisman_version', '1.0.0')
+                    ), HOUR_IN_SECONDS);
+                    
+                    // Actualizar la versión guardada
+                    update_option('visor_pdf_crisman_version', VISOR_PDF_CRISMAN_VERSION);
+                    
                     break;
                 }
             }
+        }
+    }
+    
+    /**
+     * Reactivar funcionalidades después de actualización
+     */
+    private function reactivate_after_update() {
+        // Verificar que las tablas existan y estén actualizadas
+        $this->create_tables();
+        $this->setup_default_folders();
+        $this->upgrade_analytics_tables();
+        
+        // Limpiar cachés
+        $this->clear_plugin_caches();
+        
+        // Verificar permisos del directorio de uploads
+        $this->init_upload_directory();
+        
+        // Flush rewrite rules para asegurar que las funcionalidades funcionen
+        flush_rewrite_rules();
+        
+        // Log de reactivación exitosa
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('Visor PDF Crisman - Plugin reactivado automáticamente después de actualización a versión ' . VISOR_PDF_CRISMAN_VERSION);
+        }
+    }
+    
+    /**
+     * Limpiar cachés del plugin
+     */
+    private function clear_plugin_caches() {
+        // Limpiar transients relacionados con el plugin
+        delete_transient('visor_pdf_update_info');
+        delete_transient('visor_pdf_folders_cache');
+        delete_transient('visor_pdf_analytics_cache');
+        
+        // Limpiar caché de opciones del plugin si existe
+        wp_cache_delete('visor_pdf_crisman_version', 'options');
+        
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_log('Visor PDF Crisman - Cachés limpiados después de actualización');
         }
     }
     
@@ -379,6 +437,79 @@ class VisorPDFCrisman {
         }
     }
     
+    /**
+     * Mostrar notificación de actualización exitosa
+     */
+    public function show_update_success_notice() {
+        // Solo mostrar a usuarios con permisos de administración
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+        
+        // Verificar si hay información de actualización reciente
+        $update_info = get_transient('visor_pdf_crisman_updated');
+        
+        if ($update_info && is_array($update_info)) {
+            $current_screen = get_current_screen();
+            
+            // Mostrar notificación en páginas del plugin o en la página de plugins
+            if ($current_screen && (
+                strpos($current_screen->id, 'visor-pdf-crisman') !== false || 
+                $current_screen->id === 'plugins'
+            )) {
+                
+                $version = esc_html($update_info['version']);
+                $updated_at = esc_html($update_info['updated_at']);
+                $previous_version = esc_html($update_info['previous_version']);
+                
+                echo '<div class="notice notice-success is-dismissible visor-pdf-update-notice">';
+                echo '<p><strong>🎉 ¡Visor PDF Crisman actualizado exitosamente!</strong></p>';
+                echo '<p>Versión anterior: <strong>' . $previous_version . '</strong> → Nueva versión: <strong>' . $version . '</strong></p>';
+                echo '<p>El plugin se ha reactivado automáticamente. Todas las funcionalidades están disponibles.</p>';
+                echo '<p><small>Actualizado el: ' . $updated_at . '</small></p>';
+                echo '<button type="button" class="notice-dismiss" onclick="visorPdfDismissUpdateNotice()"></button>';
+                echo '</div>';
+                
+                // JavaScript para descartar la notificación
+                echo '<script type="text/javascript">
+                function visorPdfDismissUpdateNotice() {
+                    var notice = document.querySelector(".visor-pdf-update-notice");
+                    if (notice) {
+                        notice.remove();
+                        fetch(ajaxurl, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/x-www-form-urlencoded",
+                            },
+                            body: "action=visor_pdf_dismiss_update_notice&nonce=' . wp_create_nonce('visor_pdf_dismiss_notice') . '"
+                        });
+                    }
+                }
+                
+                // Auto-dismiss después de 10 segundos
+                setTimeout(function() {
+                    var notice = document.querySelector(".visor-pdf-update-notice");
+                    if (notice && notice.style.display !== "none") {
+                        visorPdfDismissUpdateNotice();
+                    }
+                }, 10000);
+                </script>';
+                
+                // CSS adicional para el estilo de la notificación
+                echo '<style>
+                .visor-pdf-update-notice {
+                    border-left-color: #00a32a !important;
+                    background: #f0fff0;
+                }
+                .visor-pdf-update-notice p:first-of-type {
+                    font-size: 16px;
+                    margin-bottom: 8px;
+                }
+                </style>';
+            }
+        }
+    }
+
     /**
      * Menú de administración
      */
@@ -1304,6 +1435,24 @@ class VisorPDFCrisman {
         } catch (Exception $e) {
             wp_send_json_error('Error al verificar actualizaciones: ' . $e->getMessage());
         }
+    }
+    
+    /**
+     * AJAX: Descartar notificación de actualización exitosa
+     */
+    public function ajax_dismiss_update_notice() {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Acceso denegado');
+        }
+        
+        if (!wp_verify_nonce($_POST['nonce'], 'visor_pdf_dismiss_notice')) {
+            wp_send_json_error('Error de seguridad');
+        }
+        
+        // Eliminar el transient de notificación de actualización
+        delete_transient('visor_pdf_crisman_updated');
+        
+        wp_send_json_success(array('message' => 'Notificación descartada'));
     }
     
     /**
