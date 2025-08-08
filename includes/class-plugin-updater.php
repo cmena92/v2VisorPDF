@@ -57,7 +57,7 @@ class Visor_PDF_Plugin_Updater {
                 'plugin' => $this->plugin_slug,
                 'new_version' => $remote_version->version,
                 'url' => $remote_version->homepage ?? $this->plugin_data['PluginURI'],
-                'package' => $remote_version->download_url,
+                'package' => $this->get_download_url($remote_version->download_url),
                 'icons' => array(
                     '2x' => plugin_dir_url(dirname(__FILE__)) . 'assets/icon-256x256.png',
                     '1x' => plugin_dir_url(dirname(__FILE__)) . 'assets/icon-128x128.png',
@@ -182,6 +182,22 @@ class Visor_PDF_Plugin_Updater {
             'tested' => get_bloginfo('version'),
             'requires_php' => '7.4'
         );
+    }
+    
+    /**
+     * Obtener URL de descarga correcta
+     */
+    private function get_download_url($url) {
+        // Si es una URL de GitHub API, convertirla a URL de descarga directa
+        if (strpos($url, 'api.github.com') !== false && strpos($url, 'zipball') !== false) {
+            // Convertir de API URL a descarga directa
+            // De: https://api.github.com/repos/USER/REPO/zipball/refs/tags/vX.X.X
+            // A: https://github.com/USER/REPO/archive/refs/tags/vX.X.X.zip
+            $url = str_replace('api.github.com/repos/', 'github.com/', $url);
+            $url = str_replace('/zipball/', '/archive/', $url) . '.zip';
+        }
+        
+        return $url;
     }
     
     /**
