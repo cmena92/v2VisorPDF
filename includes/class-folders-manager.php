@@ -584,13 +584,28 @@ class Visor_PDF_Folders_Manager extends Visor_PDF_Core {
         );
         
         if ($result !== false) {
-            // Registrar en log
-            $this->log_activity(
-                'acta_deleted',
-                get_current_user_id(),
-                'Acta eliminada: ' . $acta->title,
-                array('acta_id' => $acta_id)
-            );
+            // Registrar en log (usando tabla de suspicious_logs)
+            global $wpdb;
+            $user_id = get_current_user_id();
+            $numero_colegiado = get_user_meta($user_id, 'numero_colegiado', true);
+            
+            if ($numero_colegiado) {
+                $wpdb->insert(
+                    $this->table_suspicious_logs,
+                    array(
+                        'user_id' => $user_id,
+                        'numero_colegiado' => $numero_colegiado,
+                        'acta_id' => $acta_id,
+                        'activity_type' => 'acta_deleted',
+                        'activity_data' => json_encode(array(
+                            'deleted_title' => $acta->title,
+                            'file_path' => $acta->file_path
+                        )),
+                        'timestamp' => current_time('mysql'),
+                        'ip_address' => $_SERVER['REMOTE_ADDR'] ?? 'unknown'
+                    )
+                );
+            }
             
             wp_send_json_success(array(
                 'message' => 'Acta eliminada correctamente',
@@ -649,13 +664,28 @@ class Visor_PDF_Folders_Manager extends Visor_PDF_Core {
         );
         
         if ($result !== false) {
-            // Registrar en log
-            $this->log_activity(
-                'acta_renamed',
-                get_current_user_id(),
-                'Acta renombrada: ' . $acta->title . ' → ' . $new_title,
-                array('acta_id' => $acta_id, 'old_title' => $acta->title, 'new_title' => $new_title)
-            );
+            // Registrar en log (usando log_suspicious_activity adaptado)
+            global $wpdb;
+            $user_id = get_current_user_id();
+            $numero_colegiado = get_user_meta($user_id, 'numero_colegiado', true);
+            
+            if ($numero_colegiado) {
+                $wpdb->insert(
+                    $this->table_suspicious_logs,
+                    array(
+                        'user_id' => $user_id,
+                        'numero_colegiado' => $numero_colegiado,
+                        'acta_id' => $acta_id,
+                        'activity_type' => 'acta_renamed',
+                        'activity_data' => json_encode(array(
+                            'old_title' => $acta->title,
+                            'new_title' => $new_title
+                        )),
+                        'timestamp' => current_time('mysql'),
+                        'ip_address' => $_SERVER['REMOTE_ADDR'] ?? 'unknown'
+                    )
+                );
+            }
             
             wp_send_json_success(array(
                 'message' => 'Acta renombrada correctamente',

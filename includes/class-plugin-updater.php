@@ -380,6 +380,23 @@ class Visor_PDF_Plugin_Updater {
      */
     private function get_version_changelog($version) {
         $changelogs = array(
+            '2.1.2' => '
+                <h4>🐛 Versión 2.1.2 - Corrección Crítica: Eliminación y Renombrado de Actas</h4>
+                <h5>🔧 Correcciones Críticas:</h5>
+                <ul>
+                    <li><strong>Error crítico solucionado</strong>: Corregido fallo que causaba "error crítico en esta web" al renombrar actas</li>
+                    <li><strong>Función log_activity faltante</strong>: Reemplazado con sistema de logging funcional usando tabla suspicious_logs</li>
+                    <li><strong>AJAX endpoints estabilizados</strong>: Eliminación y renombrado de actas ahora funcionan correctamente</li>
+                </ul>
+                <h5>✅ Funcionalidades Restauradas:</h5>
+                <ul>
+                    <li>Renombrado de actas individual desde admin (función completa)</li>
+                    <li>Eliminación de actas individual con soft delete (función completa)</li>
+                    <li>Logging de actividades de gestión de actas en tabla de auditoría</li>
+                    <li>Manejo de errores mejorado en endpoints AJAX</li>
+                </ul>
+                <p><strong>⚠️ ACTUALIZACIÓN CRÍTICA RECOMENDADA:</strong> Si experimentas errores al gestionar actas individualmente, esta versión corrige el problema completamente.</p>',
+                
             '2.1.1' => '
                 <h4>📚 Versión 2.1.1 - Documentación Mejorada</h4>
                 <h5>📖 Mejoras de Documentación:</h5>
@@ -475,6 +492,8 @@ class Visor_PDF_Plugin_Updater {
     private function get_upgrade_notice($remote_info) {
         $version = $remote_info->version;
         $notices = array(
+            '2.1.2' => '🐛 <strong>CORRECCIÓN CRÍTICA:</strong> Soluciona error crítico al renombrar/eliminar actas que causaba "Ha habido un error crítico en esta web". Actualización altamente recomendada si usas gestión individual de actas.',
+            
             '2.1.1' => '📚 <strong>DOCUMENTACIÓN MEJORADA:</strong> Ahora incluye changelog detallado por versión, instrucciones completas de instalación, FAQ comprehensivo y documentación técnica expandida. Mejora la experiencia de usuario con información más clara y accesible.',
             
             '2.1.0' => '🚀 <strong>NUEVA FUNCIONALIDAD:</strong> Activación automática post-actualización. El plugin se reactiva automáticamente después de cada update, eliminando la necesidad de reconfiguración manual. Incluye notificaciones visuales de éxito y limpieza automática de cachés.',
