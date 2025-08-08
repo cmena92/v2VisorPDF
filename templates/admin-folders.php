@@ -107,16 +107,34 @@ function render_folder_options($folders, $selected = null, $depth = 0, $prefix =
                                 <th>Carpeta</th>
                                 <th>Fecha</th>
                                 <th>Páginas</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($all_actas as $acta): ?>
-                                <tr class="acta-row" data-folder="<?php echo $acta->folder_id ?: ''; ?>">
+                                <tr class="acta-row" data-folder="<?php echo $acta->folder_id ?: ''; ?>" data-acta-id="<?php echo $acta->id; ?>">
                                     <td><input type="checkbox" class="acta-check" value="<?php echo $acta->id; ?>"></td>
-                                    <td><strong><?php echo esc_html($acta->title ?: $acta->original_name); ?></strong></td>
+                                    <td class="acta-title-cell">
+                                        <strong class="acta-title"><?php echo esc_html($acta->title ?: $acta->original_name); ?></strong>
+                                        <input type="text" class="acta-title-edit" style="display:none;" value="<?php echo esc_attr($acta->title ?: $acta->original_name); ?>">
+                                    </td>
                                     <td><?php echo esc_html($acta->folder_name ?: 'Sin asignar'); ?></td>
                                     <td><?php echo date('d/m/Y', strtotime($acta->upload_date)); ?></td>
                                     <td><?php echo $acta->total_pages; ?></td>
+                                    <td class="acta-actions">
+                                        <button class="button button-small btn-rename-acta" data-id="<?php echo $acta->id; ?>" title="Renombrar">
+                                            <span class="dashicons dashicons-edit"></span>
+                                        </button>
+                                        <button class="button button-small btn-save-rename" data-id="<?php echo $acta->id; ?>" style="display:none;" title="Guardar">
+                                            <span class="dashicons dashicons-yes"></span>
+                                        </button>
+                                        <button class="button button-small btn-cancel-rename" data-id="<?php echo $acta->id; ?>" style="display:none;" title="Cancelar">
+                                            <span class="dashicons dashicons-no"></span>
+                                        </button>
+                                        <button class="button button-small btn-delete-acta" data-id="<?php echo $acta->id; ?>" data-title="<?php echo esc_attr($acta->title ?: $acta->original_name); ?>" title="Eliminar">
+                                            <span class="dashicons dashicons-trash"></span>
+                                        </button>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -243,6 +261,187 @@ function render_folder_options($folders, $selected = null, $depth = 0, $prefix =
 @media (max-width: 768px) {
     .folder-header { flex-direction: column; align-items: flex-start; gap: 10px; }
     .controls { flex-direction: column; align-items: stretch; }
+}
+</style>
+
+<!-- JavaScript para gestión de actas -->
+<script>
+jQuery(document).ready(function($) {
+    // Nonce para seguridad
+    const nonce = '<?php echo wp_create_nonce('folders_manager_nonce'); ?>';
+    
+    // Función para eliminar acta
+    $('.btn-delete-acta').on('click', function() {
+        const actaId = $(this).data('id');
+        const actaTitle = $(this).data('title');
+        
+        if (!confirm('¿Estás seguro de eliminar el acta "' + actaTitle + '"?\n\nEsta acción no se puede deshacer.')) {
+            return;
+        }
+        
+        const $button = $(this);
+        const $row = $button.closest('tr');
+        
+        $button.prop('disabled', true).html('<span class="dashicons dashicons-update spin"></span>');
+        
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'delete_acta',
+                acta_id: actaId,
+                nonce: nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    $row.fadeOut(400, function() {
+                        $(this).remove();
+                    });
+                    alert(response.data.message);
+                } else {
+                    alert('Error: ' + response.data);
+                    $button.prop('disabled', false).html('<span class="dashicons dashicons-trash"></span>');
+                }
+            },
+            error: function() {
+                alert('Error de conexión');
+                $button.prop('disabled', false).html('<span class="dashicons dashicons-trash"></span>');
+            }
+        });
+    });
+    
+    // Función para renombrar acta - Mostrar campo de edición
+    $('.btn-rename-acta').on('click', function() {
+        const actaId = $(this).data('id');
+        const $row = $(this).closest('tr');
+        const $titleCell = $row.find('.acta-title-cell');
+        
+        // Ocultar título y mostrar input
+        $titleCell.find('.acta-title').hide();
+        $titleCell.find('.acta-title-edit').show().focus();
+        
+        // Cambiar botones
+        $(this).hide();
+        $row.find('.btn-save-rename[data-id="' + actaId + '"]').show();
+        $row.find('.btn-cancel-rename[data-id="' + actaId + '"]').show();
+    });
+    
+    // Función para cancelar renombrado
+    $('.btn-cancel-rename').on('click', function() {
+        const actaId = $(this).data('id');
+        const $row = $(this).closest('tr');
+        const $titleCell = $row.find('.acta-title-cell');
+        
+        // Restaurar estado original
+        $titleCell.find('.acta-title').show();
+        $titleCell.find('.acta-title-edit').hide();
+        
+        // Restaurar botones
+        $(this).hide();
+        $row.find('.btn-save-rename[data-id="' + actaId + '"]').hide();
+        $row.find('.btn-rename-acta[data-id="' + actaId + '"]').show();
+        
+        // Restaurar valor original
+        const originalTitle = $titleCell.find('.acta-title').text();
+        $titleCell.find('.acta-title-edit').val(originalTitle);
+    });
+    
+    // Función para guardar renombrado
+    $('.btn-save-rename').on('click', function() {
+        const actaId = $(this).data('id');
+        const $row = $(this).closest('tr');
+        const $titleCell = $row.find('.acta-title-cell');
+        const newTitle = $titleCell.find('.acta-title-edit').val().trim();
+        
+        if (!newTitle) {
+            alert('El nombre no puede estar vacío');
+            return;
+        }
+        
+        const $button = $(this);
+        $button.prop('disabled', true).html('<span class="dashicons dashicons-update spin"></span>');
+        
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'rename_acta',
+                acta_id: actaId,
+                new_title: newTitle,
+                nonce: nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Actualizar título en la UI
+                    $titleCell.find('.acta-title').text(newTitle).show();
+                    $titleCell.find('.acta-title-edit').hide();
+                    
+                    // Restaurar botones
+                    $button.hide().prop('disabled', false).html('<span class="dashicons dashicons-yes"></span>');
+                    $row.find('.btn-cancel-rename[data-id="' + actaId + '"]').hide();
+                    $row.find('.btn-rename-acta[data-id="' + actaId + '"]').show();
+                    
+                    // Mostrar mensaje de éxito (opcional)
+                    // alert(response.data.message);
+                } else {
+                    alert('Error: ' + response.data);
+                    $button.prop('disabled', false).html('<span class="dashicons dashicons-yes"></span>');
+                }
+            },
+            error: function() {
+                alert('Error de conexión');
+                $button.prop('disabled', false).html('<span class="dashicons dashicons-yes"></span>');
+            }
+        });
+    });
+    
+    // Permitir guardar con Enter en el campo de edición
+    $('.acta-title-edit').on('keypress', function(e) {
+        if (e.which === 13) { // Enter
+            e.preventDefault();
+            const actaId = $(this).closest('tr').data('acta-id');
+            $('.btn-save-rename[data-id="' + actaId + '"]').click();
+        } else if (e.which === 27) { // ESC
+            e.preventDefault();
+            const actaId = $(this).closest('tr').data('acta-id');
+            $('.btn-cancel-rename[data-id="' + actaId + '"]').click();
+        }
+    });
+});
+</script>
+
+<style>
+/* Estilos adicionales para las acciones de acta */
+.acta-actions {
+    white-space: nowrap;
+}
+
+.acta-actions .button-small {
+    padding: 4px 8px;
+    margin: 0 2px;
+}
+
+.acta-title-edit {
+    width: 100%;
+    padding: 4px 8px;
+}
+
+.dashicons.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    100% { transform: rotate(360deg); }
+}
+
+.btn-delete-acta:hover {
+    color: #d54e21;
+    border-color: #d54e21;
+}
+
+.btn-rename-acta:hover {
+    color: #0073aa;
+    border-color: #0073aa;
 }
 </style>
 

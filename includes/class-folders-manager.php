@@ -32,6 +32,10 @@ class Visor_PDF_Folders_Manager extends Visor_PDF_Core {
         add_action('wp_ajax_reassign_actas', array($this, 'ajax_reassign_actas'));
         add_action('wp_ajax_get_folder_actas', array($this, 'ajax_get_folder_actas'));
         
+        // AJAX endpoints para gestión de actas
+        add_action('wp_ajax_delete_acta', array($this, 'ajax_delete_acta'));
+        add_action('wp_ajax_rename_acta', array($this, 'ajax_rename_acta'));
+        
         // Scripts admin
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
     }
@@ -526,5 +530,140 @@ class Visor_PDF_Folders_Manager extends Visor_PDF_Core {
                 $folder_id
             )
         );
+    }
+    
+    /**
+     * AJAX: Eliminar acta
+     */
+    public function ajax_delete_acta() {
+        // Verificar permisos
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('No tienes permisos para realizar esta acción');
+        }
+        
+        // Verificar nonce
+        if (!wp_verify_nonce($_POST['nonce'], 'folders_manager_nonce')) {
+            wp_send_json_error('Error de seguridad');
+        }
+        
+        $acta_id = isset($_POST['acta_id']) ? intval($_POST['acta_id']) : 0;
+        
+        if (!$acta_id) {
+            wp_send_json_error('ID de acta inválido');
+        }
+        
+        global $wpdb;
+        
+        // Obtener información del archivo antes de eliminar
+        $acta = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT * FROM {$this->table_metadata} WHERE id = %d",
+                $acta_id
+            )
+        );
+        
+        if (!$acta) {
+            wp_send_json_error('Acta no encontrada');
+        }
+        
+        // Eliminar archivo físico
+        if ($acta->file_path && file_exists($acta->file_path)) {
+            unlink($acta->file_path);
+        }
+        
+        // Marcar como eliminado en la base de datos (soft delete)
+        $result = $wpdb->update(
+            $this->table_metadata,
+            array(
+                'status' => 'deleted',
+                'upload_date' => current_time('mysql') // Actualizar fecha de modificación
+            ),
+            array('id' => $acta_id),
+            array('%s', '%s'),
+            array('%d')
+        );
+        
+        if ($result !== false) {
+            // Registrar en log
+            $this->log_activity(
+                'acta_deleted',
+                get_current_user_id(),
+                'Acta eliminada: ' . $acta->title,
+                array('acta_id' => $acta_id)
+            );
+            
+            wp_send_json_success(array(
+                'message' => 'Acta eliminada correctamente',
+                'acta_id' => $acta_id
+            ));
+        } else {
+            wp_send_json_error('Error al eliminar el acta');
+        }
+    }
+    
+    /**
+     * AJAX: Renombrar acta
+     */
+    public function ajax_rename_acta() {
+        // Verificar permisos
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('No tienes permisos para realizar esta acción');
+        }
+        
+        // Verificar nonce
+        if (!wp_verify_nonce($_POST['nonce'], 'folders_manager_nonce')) {
+            wp_send_json_error('Error de seguridad');
+        }
+        
+        $acta_id = isset($_POST['acta_id']) ? intval($_POST['acta_id']) : 0;
+        $new_title = isset($_POST['new_title']) ? sanitize_text_field($_POST['new_title']) : '';
+        
+        if (!$acta_id || empty($new_title)) {
+            wp_send_json_error('Datos inválidos');
+        }
+        
+        global $wpdb;
+        
+        // Verificar que el acta existe
+        $acta = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT * FROM {$this->table_metadata} WHERE id = %d AND status = 'active'",
+                $acta_id
+            )
+        );
+        
+        if (!$acta) {
+            wp_send_json_error('Acta no encontrada');
+        }
+        
+        // Actualizar título
+        $result = $wpdb->update(
+            $this->table_metadata,
+            array(
+                'title' => $new_title,
+                'upload_date' => current_time('mysql') // Actualizar fecha de modificación
+            ),
+            array('id' => $acta_id),
+            array('%s', '%s'),
+            array('%d')
+        );
+        
+        if ($result !== false) {
+            // Registrar en log
+            $this->log_activity(
+                'acta_renamed',
+                get_current_user_id(),
+                'Acta renombrada: ' . $acta->title . ' → ' . $new_title,
+                array('acta_id' => $acta_id, 'old_title' => $acta->title, 'new_title' => $new_title)
+            );
+            
+            wp_send_json_success(array(
+                'message' => 'Acta renombrada correctamente',
+                'acta_id' => $acta_id,
+                'new_title' => $new_title
+            ));
+        } else {
+            wp_send_json_error('Error al renombrar el acta');
+        }
     }
 }
