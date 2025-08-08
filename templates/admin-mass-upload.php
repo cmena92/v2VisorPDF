@@ -83,7 +83,7 @@ function render_folder_select_options($folders, $prefix = '') {
                 <h4><span class="dashicons dashicons-info"></span> Límites del Sistema</h4>
                 <ul class="limits-list">
                     <li><strong>Máximo archivos:</strong> 20 por sesión</li>
-                    <li><strong>Tamaño por archivo:</strong> 10MB máximo</li>
+                    <li><strong>Tamaño por archivo:</strong> 20MB máximo</li>
                     <li><strong>Tipo permitido:</strong> Solo archivos PDF</li>
                     <li><strong>Procesamiento:</strong> Secuencial para estabilidad</li>
                 </ul>

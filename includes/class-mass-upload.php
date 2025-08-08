@@ -13,7 +13,7 @@ require_once VISOR_PDF_CRISMAN_PLUGIN_DIR . 'includes/class-visor-core.php';
 class Visor_PDF_Mass_Upload extends Visor_PDF_Core {
     
     private $max_files = 20;
-    private $max_file_size = 10485760; // 10MB por archivo
+    private $max_file_size = 20971520; // 20MB por archivo
     private $allowed_types = array('application/pdf');
     
     public function __construct() {
@@ -107,7 +107,7 @@ class Visor_PDF_Mass_Upload extends Visor_PDF_Core {
                 'completed' => 'Completado',
                 'failed' => 'Error',
                 'maxFilesError' => 'Máximo ' . $this->max_files . ' archivos permitidos',
-                'fileSizeError' => 'Archivo demasiado grande (máximo 10MB)',
+                'fileSizeError' => 'Archivo demasiado grande (máximo 20MB)',
                 'fileTypeError' => 'Solo se permiten archivos PDF'
             )
         ));
@@ -313,7 +313,7 @@ class Visor_PDF_Mass_Upload extends Visor_PDF_Core {
         
         // Verificar tamaño
         if ($file['size'] > $this->max_file_size) {
-            return array('valid' => false, 'error' => 'Archivo demasiado grande (máximo 10MB)');
+            return array('valid' => false, 'error' => 'Archivo demasiado grande (máximo 20MB)');
         }
         
         // Verificar que no está corrupto
