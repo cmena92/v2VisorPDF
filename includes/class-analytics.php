@@ -236,13 +236,25 @@ class Visor_PDF_Analytics extends Visor_PDF_Core {
              LIMIT 5"
         );
         
-        // Distribución por dispositivos
-        $stats['device_distribution'] = $wpdb->get_results(
-            "SELECT device_type, COUNT(*) as count
-             FROM {$wpdb->prefix}actas_logs 
-             WHERE device_type IS NOT NULL
-             GROUP BY device_type"
+        // Distribución por dispositivos (verificar si la columna existe primero)
+        $device_column_exists = $wpdb->get_results(
+            "SHOW COLUMNS FROM {$wpdb->prefix}actas_logs LIKE 'device_type'"
         );
+        
+        if (!empty($device_column_exists)) {
+            $stats['device_distribution'] = $wpdb->get_results(
+                "SELECT device_type, COUNT(*) as count
+                 FROM {$wpdb->prefix}actas_logs 
+                 WHERE device_type IS NOT NULL
+                 GROUP BY device_type"
+            );
+        } else {
+            // Si no existe la columna, devolver array vacío
+            $stats['device_distribution'] = array();
+            
+            // Intentar actualizar la tabla
+            $this->upgrade_tables_for_analytics();
+        }
         
         // Cache por 5 minutos
         set_transient($cache_key, $stats, $this->cache_expiry);
@@ -410,7 +422,7 @@ class Visor_PDF_Analytics extends Visor_PDF_Core {
         
         if (empty($columns)) {
             // Agregar nuevas columnas para analytics extendidos
-            $wpdb->query(
+            $result1 = $wpdb->query(
                 "ALTER TABLE {$wpdb->prefix}actas_logs 
                  ADD COLUMN acta_id INT(11) AFTER acta_filename,
                  ADD COLUMN device_type VARCHAR(20) AFTER user_agent,
@@ -419,13 +431,20 @@ class Visor_PDF_Analytics extends Visor_PDF_Core {
                  ADD COLUMN referrer VARCHAR(255) AFTER session_duration"
             );
             
-            // Agregar índices para mejor performance
-            $wpdb->query(
-                "ALTER TABLE {$wpdb->prefix}actas_logs 
-                 ADD INDEX idx_acta_id (acta_id),
-                 ADD INDEX idx_device_type (device_type),
-                 ADD INDEX idx_viewed_at (viewed_at)"
-            );
+            if ($result1 !== false) {
+                // Agregar índices para mejor performance (solo si se agregaron las columnas)
+                $wpdb->query(
+                    "ALTER TABLE {$wpdb->prefix}actas_logs 
+                     ADD INDEX idx_acta_id (acta_id),
+                     ADD INDEX idx_device_type (device_type),
+                     ADD INDEX idx_viewed_at (viewed_at)"
+                );
+            }
+            
+            // Log para debug
+            if (defined('WP_DEBUG') && WP_DEBUG && $result1 === false) {
+                error_log('Visor PDF Analytics - Error al agregar columnas: ' . $wpdb->last_error);
+            }
         }
         
         return true;

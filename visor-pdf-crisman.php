@@ -3,7 +3,7 @@
  * Plugin Name: Visor PDF Crisman
  * Plugin URI: https://github.com/cmena92/v2VisorPDF
  * Description: Sistema seguro para cargar, visualizar y controlar acceso a actas PDF con marcas de agua - CORREGIDO
- * Version: 2.0.4
+ * Version: 2.0.5
  * Author: Crisman
  * Author URI: https://tu-sitio-web.com
  * License: GPL v2 or later
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Definir constantes del plugin
-define('VISOR_PDF_CRISMAN_VERSION', '2.0.4');
+define('VISOR_PDF_CRISMAN_VERSION', '2.0.5');
 define('VISOR_PDF_CRISMAN_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('VISOR_PDF_CRISMAN_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -56,6 +56,10 @@ class VisorPDFCrisman {
         // Hooks que deben ejecutarse temprano
         register_activation_hook(__FILE__, array($this, 'activate'));
         register_deactivation_hook(__FILE__, array($this, 'deactivate'));
+        
+        // Hook para actualizaciones de plugin
+        add_action('upgrader_process_complete', array($this, 'on_plugin_update'), 10, 2);
+        add_action('admin_init', array($this, 'check_version_and_upgrade'));
     }
     
     /**
@@ -66,6 +70,11 @@ class VisorPDFCrisman {
         $this->load_dependencies();
         $this->init_modules();
         $this->init_upload_directory();
+        
+        // Verificar y actualizar tablas si es necesario (solo en admin)
+        if (is_admin()) {
+            $this->check_version_and_upgrade();
+        }
     }
     
     /**
@@ -326,6 +335,35 @@ class VisorPDFCrisman {
         
         foreach ($default_folders as $folder) {
             $wpdb->insert($wpdb->prefix . 'actas_folders', $folder, array('%s', '%s', '%d', '%d', '%d'));
+        }
+    }
+    
+    /**
+     * Verificar versión y ejecutar upgrade si es necesario
+     */
+    public function check_version_and_upgrade() {
+        $installed_version = get_option('visor_pdf_crisman_version', '0.0.0');
+        
+        if (version_compare($installed_version, VISOR_PDF_CRISMAN_VERSION, '<')) {
+            // Ejecutar upgrades
+            $this->upgrade_analytics_tables();
+            
+            // Actualizar versión instalada
+            update_option('visor_pdf_crisman_version', VISOR_PDF_CRISMAN_VERSION);
+        }
+    }
+    
+    /**
+     * Hook para cuando el plugin se actualiza
+     */
+    public function on_plugin_update($upgrader_object, $options) {
+        if ($options['type'] === 'plugin' && isset($options['plugins'])) {
+            foreach ($options['plugins'] as $plugin) {
+                if ($plugin === plugin_basename(__FILE__)) {
+                    $this->upgrade_analytics_tables();
+                    break;
+                }
+            }
         }
     }
     
