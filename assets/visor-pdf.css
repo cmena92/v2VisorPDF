@@ -171,24 +171,6 @@
     justify-content: center;
 }
 
-.close-modal-center {
-    background: #dc3545;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s;
-    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
-}
-
-.close-modal-center:hover {
-    background: #c82333;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
-}
 
 .prev-page, .next-page {
     background: #0073aa;
@@ -261,31 +243,35 @@
 }
 
 /* Botón de cerrar en controles centrales */
-.close-modal-center {
-    background: linear-gradient(145deg, #dc3545 0%, #c82333 100%);
-    color: white;
-    border: 2px solid #dc3545;
-    padding: 8px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
-    margin-left: 15px;
-    white-space: nowrap;
+.btn-close-visor-center {
+    display: inline-block !important;
+    visibility: visible !important;
+    background: linear-gradient(145deg, #dc3545 0%, #c82333 100%) !important;
+    color: white !important;
+    border: 2px solid #dc3545 !important;
+    padding: 8px 16px !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3) !important;
+    margin-left: 15px !important;
+    white-space: nowrap !important;
+    opacity: 1 !important;
+    z-index: 1000 !important;
 }
 
-.close-modal-center:hover {
-    background: linear-gradient(145deg, #c82333 0%, #a02028 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
-    border-color: #bd2130;
+.btn-close-visor-center:hover {
+    background: linear-gradient(145deg, #c82333 0%, #a02028 100%) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4) !important;
+    border-color: #bd2130 !important;
 }
 
-.close-modal-center:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 4px rgba(220, 53, 69, 0.3);
+.btn-close-visor-center:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 1px 4px rgba(220, 53, 69, 0.3) !important;
 }
 
 /* Botón de cerrar prominente - ROJO Y DESTACADO */
@@ -540,9 +526,10 @@
         order: 3;
     }
     
-    .close-modal-center {
-        font-size: 12px;
-        padding: 6px 12px;
+    .btn-close-visor-center {
+        font-size: 12px !important;
+        padding: 6px 12px !important;
+        margin-left: 10px !important;
     }
     
     .zoom-controls {

@@ -49,10 +49,10 @@ jQuery(document).ready(function($) {
             });
             
             // Cerrar modal - ACTUALIZADO para incluir nuevo botón prominente
-            $(document).on('click', '.close-modal, .close-modal-center, .close-modal-prominent, .modal-overlay', (e) => {
+            $(document).on('click', '.close-modal, .btn-close-visor-center, .close-modal-prominent, .modal-overlay', (e) => {
                 if (e.target === e.currentTarget || 
                     e.target.classList.contains('close-modal') || 
-                    e.target.classList.contains('close-modal-center') ||
+                    e.target.classList.contains('btn-close-visor-center') ||
                     e.target.classList.contains('close-modal-prominent') ||
                     e.target.classList.contains('close-icon') ||
                     e.target.classList.contains('close-text')) {
@@ -136,7 +136,7 @@ jQuery(document).ready(function($) {
                                             <span class="zoom-level">100%</span>
                                             <button class="zoom-in" title="Acercar">🔍+</button>
                                             <button class="zoom-fit" title="Ajustar">📐</button>
-                                            <button class="close-modal-center" title="Cerrar visor">✕ Cerrar</button>
+                                            <button class="btn-close-visor-center" title="Cerrar visor">✕ Cerrar</button>
                                         </div>
                                     </div>
                                     <div class="controls-right">
@@ -374,10 +374,10 @@ jQuery(document).ready(function($) {
             }
             
             // Verificar botón en controls-center (zoom-controls)
-            if ($zoomControls.find('.close-modal-center').length === 0) {
+            if ($zoomControls.find('.btn-close-visor-center').length === 0) {
                 console.log('🔴 Agregando botón de cerrar en controles centrales...');
                 
-                const closeCenterBtn = `<button class="close-modal-center" title="Cerrar visor">✕ Cerrar</button>`;
+                const closeCenterBtn = `<button class="btn-close-visor-center" title="Cerrar visor">✕ Cerrar</button>`;
                 $zoomControls.append(closeCenterBtn);
                 console.log('✅ Botón de cerrar central agregado exitosamente');
             } else {
