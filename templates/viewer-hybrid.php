@@ -403,12 +403,29 @@ $carpetas = $all_carpetas;
 
 .acta-title-cell {
     vertical-align: middle;
+    padding: 12px 15px;
+}
+
+/* Eliminar cualquier borde o caja alrededor del ícono PDF */
+.acta-title-cell img,
+.acta-title-cell .pdf-icon {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 8px 0 0 !important;
 }
 
 .pdf-icon {
     display: inline-block;
     vertical-align: middle;
     margin-right: 8px;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 !important;
 }
 
 .acta-title-text {
