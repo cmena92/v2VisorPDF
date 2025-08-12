@@ -115,12 +115,16 @@ class Visor_PDF_Core {
             
             // Agregar marca de agua
             $draw = new ImagickDraw();
-            $draw->setFillColor('rgba(255, 0, 0, 0.3)');
+            $draw->setFillColor('rgba(255, 0, 0, 0.15)');
             $draw->setFontSize(min($width, $height) * 0.03);
-            $draw->setStrokeColor('rgba(255, 0, 0, 0.1)');
+            $draw->setStrokeColor('rgba(255, 0, 0, 0.05)');
             $draw->setStrokeWidth(1);
             
+            // Establecer zona horaria de Costa Rica
+            $timezone_original = date_default_timezone_get();
+            date_default_timezone_set('America/Costa_Rica');
             $watermark_text = "Colegiado: " . $numero_colegiado . "\n" . date('Y-m-d H:i:s');
+            date_default_timezone_set($timezone_original);
             $draw->setGravity(Imagick::GRAVITY_CENTER);
             $canvas->annotateImage($draw, 0, 0, 45, $watermark_text);
             

@@ -14,9 +14,6 @@ if (!defined('ABSPATH')) exit;
             Ver Acta
         </button>
     </td>
-    <td class="acta-date-cell">
-        <?php echo date('d/m/Y', strtotime($acta->upload_date)); ?>
-    </td>
     <td class="acta-pages-cell">
         <?php echo intval($acta->total_pages); ?> págs
     </td>
