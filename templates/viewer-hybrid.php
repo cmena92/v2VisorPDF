@@ -110,8 +110,7 @@ $carpetas = $all_carpetas;
                             <tr class="acta-row" data-acta-id="<?php echo $acta->id; ?>" data-folder-id="<?php echo $acta->folder_id ?: 0; ?>">
                                 <td class="acta-title-cell">
                                     <img src="https://preproduccion.cpic.or.cr/wp-content/wp-file-download/icons/svg/pdf.svg?version=1733930755" 
-                                         alt="PDF" class="pdf-icon" width="20" height="20">
-                                    <span class="acta-title-text"><?php echo esc_html($acta->title ?: 'Acta sin título'); ?></span>
+                                         alt="PDF" class="pdf-icon" width="20" height="20"><span class="acta-title-text"><?php echo esc_html($acta->title ?: 'Acta sin título'); ?></span>
                                 </td>
                                 <td class="acta-pages-cell">
                                     <?php echo intval($acta->total_pages); ?> págs
@@ -403,16 +402,18 @@ $carpetas = $all_carpetas;
 }
 
 .acta-title-cell {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    vertical-align: middle;
 }
 
 .pdf-icon {
-    flex-shrink: 0;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 8px;
 }
 
 .acta-title-text {
+    display: inline;
+    vertical-align: middle;
     font-weight: 500;
     color: #495057;
 }
