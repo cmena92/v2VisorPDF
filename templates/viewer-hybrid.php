@@ -401,31 +401,23 @@ $carpetas = $all_carpetas;
     color: #495057;
 }
 
+/* Asegurar que acta-title-cell no tenga bordes */
 .acta-title-cell {
-    vertical-align: middle;
-    padding: 12px 15px;
-}
-
-/* Eliminar cualquier borde o caja alrededor del ícono PDF */
-.acta-title-cell img,
-.acta-title-cell .pdf-icon {
     border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
     background: transparent !important;
-    padding: 0 !important;
-    margin: 0 8px 0 0 !important;
+    box-shadow: none !important;
+    outline: none !important;
 }
 
 .pdf-icon {
     display: inline-block;
     vertical-align: middle;
     margin-right: 8px;
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-    background: transparent !important;
-    padding: 0 !important;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    background: transparent;
+    padding: 0;
 }
 
 .acta-title-text {
