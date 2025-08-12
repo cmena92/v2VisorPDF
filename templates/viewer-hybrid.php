@@ -1,23 +1,11 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-// Obtener años disponibles con conteo de actas
+// Obtener carpetas disponibles con jerarquía
 global $wpdb;
-$table_metadata = $wpdb->prefix . 'actas_metadata';
-
-// Obtener años únicos de las actas activas
-$years_data = $wpdb->get_results("
-    SELECT 
-        YEAR(upload_date) as year,
-        COUNT(*) as actas_count
-    FROM $table_metadata
-    WHERE status = 'active'
-    GROUP BY YEAR(upload_date)
-    ORDER BY year DESC
-");
-
-// También obtener carpetas para compatibilidad (pero no las usaremos en el selector)
 $table_folders = $wpdb->prefix . 'actas_folders';
+
+// Obtener todas las carpetas con conteo de actas
 $all_carpetas = $wpdb->get_results("
     SELECT f.*, COUNT(a.id) as actas_count 
     FROM $table_folders f
@@ -26,6 +14,21 @@ $all_carpetas = $wpdb->get_results("
     GROUP BY f.id
     ORDER BY f.order_index ASC, f.name ASC
 ");
+
+// Organizar carpetas en jerarquía padre-hijos
+$carpetas_padres = array();
+$carpetas_hijas = array();
+
+foreach ($all_carpetas as $carpeta) {
+    if ($carpeta->parent_id === null || $carpeta->parent_id == 0) {
+        $carpetas_padres[] = $carpeta;
+    } else {
+        if (!isset($carpetas_hijas[$carpeta->parent_id])) {
+            $carpetas_hijas[$carpeta->parent_id] = array();
+        }
+        $carpetas_hijas[$carpeta->parent_id][] = $carpeta;
+    }
+}
 
 // Para compatibilidad con código existente
 $carpetas = $all_carpetas;
