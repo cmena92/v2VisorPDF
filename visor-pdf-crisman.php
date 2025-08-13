@@ -3,7 +3,7 @@
  * Plugin Name: Visor PDF Crisman
  * Plugin URI: https://github.com/cmena92/v2VisorPDF
  * Description: Sistema seguro para cargar, visualizar y controlar acceso a actas PDF con marcas de agua - CORREGIDO
- * Version: 2.1.7
+ * Version: 2.1.8
  * Author: Crisman
  * Author URI: https://tu-sitio-web.com
  * License: GPL v2 or later
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Definir constantes del plugin
-define('VISOR_PDF_CRISMAN_VERSION', '2.1.7');
+define('VISOR_PDF_CRISMAN_VERSION', '2.1.8');
 define('VISOR_PDF_CRISMAN_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('VISOR_PDF_CRISMAN_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -135,6 +135,7 @@ class VisorPDFCrisman {
         // Endpoints para reordenar actas
         add_action('wp_ajax_move_acta_up', array($this, 'ajax_move_acta_up'));
         add_action('wp_ajax_move_acta_down', array($this, 'ajax_move_acta_down'));
+        add_action('wp_ajax_force_migrate_order', array($this, 'ajax_force_migrate_order'));
         
         // Widget en dashboard
         add_action('wp_dashboard_setup', array($this, 'add_dashboard_widget'));
@@ -455,8 +456,13 @@ class VisorPDFCrisman {
         // Verificar si ya existe la columna order_index
         $columns = $wpdb->get_results("SHOW COLUMNS FROM $table LIKE 'order_index'");
         if (empty($columns)) {
-            // Si no existe la columna, dbDelta la creará, no necesitamos hacer nada aquí
-            return;
+            // Si no existe la columna, intentar agregarla manualmente
+            $wpdb->query("ALTER TABLE $table ADD COLUMN order_index int(11) DEFAULT 0");
+            $wpdb->query("ALTER TABLE $table ADD INDEX idx_order (order_index)");
+            
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log('Visor PDF Crisman - Columna order_index agregada manualmente');
+            }
         }
         
         // Verificar si ya hay actas con order_index asignado
@@ -1648,6 +1654,32 @@ class VisorPDFCrisman {
     }
     
     /**
+     * AJAX: Forzar migración de order_index (emergencia)
+     */
+    public function ajax_force_migrate_order() {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Acceso denegado');
+        }
+        
+        if (!wp_verify_nonce($_POST['nonce'], 'actas_nonce')) {
+            wp_send_json_error('Error de seguridad');
+        }
+        
+        try {
+            // Forzar creación de tablas y migración
+            $this->create_tables();
+            $this->migrate_existing_actas_order();
+            
+            wp_send_json_success(array(
+                'message' => 'Migración ejecutada exitosamente',
+                'reload' => true
+            ));
+        } catch (Exception $e) {
+            wp_send_json_error('Error en migración: ' . $e->getMessage());
+        }
+    }
+    
+    /**
      * Métodos de utilidad
      */
     private function get_actas_for_hybrid($atts) {
@@ -1664,6 +1696,15 @@ class VisorPDFCrisman {
         
         $where_clause = implode(' AND ', $where_conditions);
         
+        // Verificar si la columna order_index existe
+        $table_name = $wpdb->prefix . 'actas_metadata';
+        $columns = $wpdb->get_results("SHOW COLUMNS FROM $table_name LIKE 'order_index'");
+        $has_order_index = !empty($columns);
+        
+        $order_clause = $has_order_index ? 
+            "ORDER BY a.order_index ASC, a.upload_date DESC" : 
+            "ORDER BY a.upload_date DESC";
+        
         $sql = "
             SELECT 
                 a.*,
@@ -1672,7 +1713,7 @@ class VisorPDFCrisman {
             FROM {$wpdb->prefix}actas_metadata a
             LEFT JOIN {$wpdb->prefix}actas_folders f ON a.folder_id = f.id
             WHERE {$where_clause}
-            ORDER BY a.order_index ASC, a.upload_date DESC
+            $order_clause
         ";
         
         if (!empty($atts['limite']) && is_numeric($atts['limite'])) {
