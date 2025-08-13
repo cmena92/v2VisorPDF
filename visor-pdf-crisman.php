@@ -132,6 +132,10 @@ class VisorPDFCrisman {
         add_action('wp_ajax_visor_pdf_force_update_check', array($this, 'ajax_force_update_check'));
         add_action('wp_ajax_visor_pdf_dismiss_update_notice', array($this, 'ajax_dismiss_update_notice'));
         
+        // Endpoints para reordenar actas
+        add_action('wp_ajax_move_acta_up', array($this, 'ajax_move_acta_up'));
+        add_action('wp_ajax_move_acta_down', array($this, 'ajax_move_acta_down'));
+        
         // Widget en dashboard
         add_action('wp_dashboard_setup', array($this, 'add_dashboard_widget'));
     }
@@ -278,9 +282,11 @@ class VisorPDFCrisman {
             total_pages int(11),
             file_size bigint,
             status enum('active', 'inactive') DEFAULT 'active',
+            order_index int(11) DEFAULT 0,
             PRIMARY KEY (id),
             UNIQUE KEY uk_filename (filename),
-            INDEX idx_folder_id (folder_id)
+            INDEX idx_folder_id (folder_id),
+            INDEX idx_order (order_index)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
         dbDelta($sql_actas);
         
@@ -1456,6 +1462,133 @@ class VisorPDFCrisman {
     }
     
     /**
+     * AJAX: Mover acta hacia arriba en el orden
+     */
+    public function ajax_move_acta_up() {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Acceso denegado');
+        }
+        
+        if (!wp_verify_nonce($_POST['nonce'], 'actas_nonce')) {
+            wp_send_json_error('Error de seguridad');
+        }
+        
+        $acta_id = intval($_POST['acta_id']);
+        $folder_id = isset($_POST['folder_id']) ? intval($_POST['folder_id']) : null;
+        
+        $result = $this->move_acta_order($acta_id, 'up', $folder_id);
+        
+        if ($result) {
+            wp_send_json_success(array('message' => 'Acta movida hacia arriba'));
+        } else {
+            wp_send_json_error('Error al mover el acta');
+        }
+    }
+    
+    /**
+     * AJAX: Mover acta hacia abajo en el orden
+     */
+    public function ajax_move_acta_down() {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Acceso denegado');
+        }
+        
+        if (!wp_verify_nonce($_POST['nonce'], 'actas_nonce')) {
+            wp_send_json_error('Error de seguridad');
+        }
+        
+        $acta_id = intval($_POST['acta_id']);
+        $folder_id = isset($_POST['folder_id']) ? intval($_POST['folder_id']) : null;
+        
+        $result = $this->move_acta_order($acta_id, 'down', $folder_id);
+        
+        if ($result) {
+            wp_send_json_success(array('message' => 'Acta movida hacia abajo'));
+        } else {
+            wp_send_json_error('Error al mover el acta');
+        }
+    }
+    
+    /**
+     * Lógica para mover actas en el orden
+     */
+    private function move_acta_order($acta_id, $direction, $folder_id = null) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'actas_metadata';
+        
+        // Obtener el acta actual
+        $current_acta = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $table WHERE id = %d AND status = 'active'",
+            $acta_id
+        ));
+        
+        if (!$current_acta) {
+            return false;
+        }
+        
+        // Construir WHERE clause para el contexto (misma carpeta o sin carpeta)
+        if ($folder_id && $folder_id > 0) {
+            $context_where = $wpdb->prepare("folder_id = %d", $folder_id);
+        } else {
+            $context_where = "(folder_id IS NULL OR folder_id = 0)";
+        }
+        
+        // Encontrar acta adyacente según dirección
+        if ($direction === 'up') {
+            // Buscar acta con order_index menor (anterior)
+            $adjacent_acta = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $table 
+                 WHERE $context_where 
+                 AND status = 'active' 
+                 AND (order_index < %d OR (order_index = %d AND id < %d))
+                 ORDER BY order_index DESC, id DESC 
+                 LIMIT 1",
+                $current_acta->order_index,
+                $current_acta->order_index,
+                $current_acta->id
+            ));
+        } else {
+            // Buscar acta con order_index mayor (siguiente)
+            $adjacent_acta = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $table 
+                 WHERE $context_where 
+                 AND status = 'active' 
+                 AND (order_index > %d OR (order_index = %d AND id > %d))
+                 ORDER BY order_index ASC, id ASC 
+                 LIMIT 1",
+                $current_acta->order_index,
+                $current_acta->order_index,
+                $current_acta->id
+            ));
+        }
+        
+        if (!$adjacent_acta) {
+            return false; // No hay acta para intercambiar
+        }
+        
+        // Intercambiar order_index
+        $temp_order = $current_acta->order_index;
+        
+        $wpdb->update(
+            $table,
+            array('order_index' => $adjacent_acta->order_index),
+            array('id' => $current_acta->id),
+            array('%d'),
+            array('%d')
+        );
+        
+        $wpdb->update(
+            $table,
+            array('order_index' => $temp_order),
+            array('id' => $adjacent_acta->id),
+            array('%d'),
+            array('%d')
+        );
+        
+        return true;
+    }
+    
+    /**
      * Métodos de utilidad
      */
     private function get_actas_for_hybrid($atts) {
@@ -1480,7 +1613,7 @@ class VisorPDFCrisman {
             FROM {$wpdb->prefix}actas_metadata a
             LEFT JOIN {$wpdb->prefix}actas_folders f ON a.folder_id = f.id
             WHERE {$where_clause}
-            ORDER BY a.upload_date DESC
+            ORDER BY a.order_index ASC, a.upload_date DESC
         ";
         
         if (!empty($atts['limite']) && is_numeric($atts['limite'])) {

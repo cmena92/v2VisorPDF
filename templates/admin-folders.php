@@ -107,6 +107,7 @@ function render_folder_options($folders, $selected = null, $depth = 0, $prefix =
                                 <th>Carpeta</th>
                                 <th>Fecha</th>
                                 <th>Páginas</th>
+                                <th>Orden</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -121,6 +122,15 @@ function render_folder_options($folders, $selected = null, $depth = 0, $prefix =
                                     <td><?php echo esc_html($acta->folder_name ?: 'Sin asignar'); ?></td>
                                     <td><?php echo date('d/m/Y', strtotime($acta->upload_date)); ?></td>
                                     <td><?php echo $acta->total_pages; ?></td>
+                                    <td class="acta-order">
+                                        <button class="button button-small btn-move-up" data-id="<?php echo $acta->id; ?>" data-folder="<?php echo $acta->folder_id ?: '0'; ?>" title="Subir">
+                                            <span class="dashicons dashicons-arrow-up-alt2"></span>
+                                        </button>
+                                        <button class="button button-small btn-move-down" data-id="<?php echo $acta->id; ?>" data-folder="<?php echo $acta->folder_id ?: '0'; ?>" title="Bajar">
+                                            <span class="dashicons dashicons-arrow-down-alt2"></span>
+                                        </button>
+                                        <span class="order-index"><?php echo intval($acta->order_index); ?></span>
+                                    </td>
                                     <td class="acta-actions">
                                         <button class="button button-small btn-rename-acta" data-id="<?php echo $acta->id; ?>" title="Renombrar">
                                             <span class="dashicons dashicons-edit"></span>
@@ -407,6 +417,74 @@ jQuery(document).ready(function($) {
             $('.btn-cancel-rename[data-id="' + actaId + '"]').click();
         }
     });
+    
+    // Función para mover acta hacia arriba
+    $('.btn-move-up').on('click', function() {
+        const actaId = $(this).data('id');
+        const folderId = $(this).data('folder');
+        const $button = $(this);
+        const $row = $button.closest('tr');
+        
+        $button.prop('disabled', true).html('<span class="dashicons dashicons-update spin"></span>');
+        
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'move_acta_up',
+                acta_id: actaId,
+                folder_id: folderId,
+                nonce: '<?php echo wp_create_nonce('actas_nonce'); ?>'
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Recargar la página para ver el nuevo orden
+                    location.reload();
+                } else {
+                    alert('Error: ' + response.data);
+                    $button.prop('disabled', false).html('<span class="dashicons dashicons-arrow-up-alt2"></span>');
+                }
+            },
+            error: function() {
+                alert('Error de conexión');
+                $button.prop('disabled', false).html('<span class="dashicons dashicons-arrow-up-alt2"></span>');
+            }
+        });
+    });
+    
+    // Función para mover acta hacia abajo
+    $('.btn-move-down').on('click', function() {
+        const actaId = $(this).data('id');
+        const folderId = $(this).data('folder');
+        const $button = $(this);
+        const $row = $button.closest('tr');
+        
+        $button.prop('disabled', true).html('<span class="dashicons dashicons-update spin"></span>');
+        
+        $.ajax({
+            url: ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'move_acta_down',
+                acta_id: actaId,
+                folder_id: folderId,
+                nonce: '<?php echo wp_create_nonce('actas_nonce'); ?>'
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Recargar la página para ver el nuevo orden
+                    location.reload();
+                } else {
+                    alert('Error: ' + response.data);
+                    $button.prop('disabled', false).html('<span class="dashicons dashicons-arrow-down-alt2"></span>');
+                }
+            },
+            error: function() {
+                alert('Error de conexión');
+                $button.prop('disabled', false).html('<span class="dashicons dashicons-arrow-down-alt2"></span>');
+            }
+        });
+    });
 });
 </script>
 
@@ -437,6 +515,31 @@ jQuery(document).ready(function($) {
 .btn-delete-acta:hover {
     color: #d54e21;
     border-color: #d54e21;
+}
+
+/* Estilos para la columna de orden */
+.acta-order {
+    white-space: nowrap;
+    text-align: center;
+    min-width: 120px;
+}
+
+.acta-order .button-small {
+    padding: 4px 6px;
+    margin: 0 1px;
+    vertical-align: middle;
+}
+
+.order-index {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 6px;
+    background: #f0f0f1;
+    border-radius: 3px;
+    font-size: 11px;
+    color: #646970;
+    min-width: 20px;
+    text-align: center;
 }
 
 .btn-rename-acta:hover {
