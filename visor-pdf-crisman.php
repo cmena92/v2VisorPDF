@@ -3,7 +3,7 @@
  * Plugin Name: Visor PDF Crisman
  * Plugin URI: https://github.com/cmena92/v2VisorPDF
  * Description: Sistema seguro para cargar, visualizar y controlar acceso a actas PDF con marcas de agua - CORREGIDO
- * Version: 2.1.8
+ * Version: 2.1.9
  * Author: Crisman
  * Author URI: https://tu-sitio-web.com
  * License: GPL v2 or later
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Definir constantes del plugin
-define('VISOR_PDF_CRISMAN_VERSION', '2.1.8');
+define('VISOR_PDF_CRISMAN_VERSION', '2.1.9');
 define('VISOR_PDF_CRISMAN_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('VISOR_PDF_CRISMAN_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -1581,6 +1581,18 @@ class VisorPDFCrisman {
         global $wpdb;
         $table = $wpdb->prefix . 'actas_metadata';
         
+        // Primero, verificar si existe la columna order_index
+        $columns = $wpdb->get_results("SHOW COLUMNS FROM $table LIKE 'order_index'");
+        if (empty($columns)) {
+            // Si no existe la columna, intentar crearla
+            $this->migrate_existing_actas_order();
+            // Verificar de nuevo
+            $columns = $wpdb->get_results("SHOW COLUMNS FROM $table LIKE 'order_index'");
+            if (empty($columns)) {
+                return false; // No se pudo crear la columna
+            }
+        }
+        
         // Obtener el acta actual
         $current_acta = $wpdb->get_row($wpdb->prepare(
             "SELECT * FROM $table WHERE id = %d AND status = 'active'",
@@ -1591,12 +1603,25 @@ class VisorPDFCrisman {
             return false;
         }
         
+        // Si el order_index es NULL o 0, necesitamos inicializar todos los order_index de esa carpeta
+        if (!isset($current_acta->order_index) || $current_acta->order_index == 0) {
+            $this->initialize_folder_order($folder_id);
+            // Recargar el acta actual
+            $current_acta = $wpdb->get_row($wpdb->prepare(
+                "SELECT * FROM $table WHERE id = %d AND status = 'active'",
+                $acta_id
+            ));
+        }
+        
         // Construir WHERE clause para el contexto (misma carpeta o sin carpeta)
         if ($folder_id && $folder_id > 0) {
             $context_where = $wpdb->prepare("folder_id = %d", $folder_id);
         } else {
             $context_where = "(folder_id IS NULL OR folder_id = 0)";
         }
+        
+        // Obtener current order_index con valor por defecto
+        $current_order = isset($current_acta->order_index) ? intval($current_acta->order_index) : 0;
         
         // Encontrar acta adyacente según dirección
         if ($direction === 'up') {
@@ -1608,8 +1633,8 @@ class VisorPDFCrisman {
                  AND (order_index < %d OR (order_index = %d AND id < %d))
                  ORDER BY order_index DESC, id DESC 
                  LIMIT 1",
-                $current_acta->order_index,
-                $current_acta->order_index,
+                $current_order,
+                $current_order,
                 $current_acta->id
             ));
         } else {
@@ -1621,8 +1646,8 @@ class VisorPDFCrisman {
                  AND (order_index > %d OR (order_index = %d AND id > %d))
                  ORDER BY order_index ASC, id ASC 
                  LIMIT 1",
-                $current_acta->order_index,
-                $current_acta->order_index,
+                $current_order,
+                $current_order,
                 $current_acta->id
             ));
         }
@@ -1631,12 +1656,13 @@ class VisorPDFCrisman {
             return false; // No hay acta para intercambiar
         }
         
-        // Intercambiar order_index
-        $temp_order = $current_acta->order_index;
+        // Obtener adjacent order_index con valor por defecto
+        $adjacent_order = isset($adjacent_acta->order_index) ? intval($adjacent_acta->order_index) : 0;
         
+        // Intercambiar order_index
         $wpdb->update(
             $table,
-            array('order_index' => $adjacent_acta->order_index),
+            array('order_index' => $adjacent_order),
             array('id' => $current_acta->id),
             array('%d'),
             array('%d')
@@ -1644,13 +1670,48 @@ class VisorPDFCrisman {
         
         $wpdb->update(
             $table,
-            array('order_index' => $temp_order),
+            array('order_index' => $current_order),
             array('id' => $adjacent_acta->id),
             array('%d'),
             array('%d')
         );
         
         return true;
+    }
+    
+    /**
+     * Inicializar order_index para todas las actas de una carpeta
+     */
+    private function initialize_folder_order($folder_id = null) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'actas_metadata';
+        
+        // Construir WHERE clause
+        if ($folder_id && $folder_id > 0) {
+            $where = $wpdb->prepare("WHERE folder_id = %d AND status = 'active'", $folder_id);
+        } else {
+            $where = "WHERE (folder_id IS NULL OR folder_id = 0) AND status = 'active'";
+        }
+        
+        // Obtener todas las actas de la carpeta
+        $actas = $wpdb->get_results("
+            SELECT id FROM $table 
+            $where
+            ORDER BY upload_date DESC
+        ");
+        
+        // Asignar order_index secuencial
+        $order = 1;
+        foreach ($actas as $acta) {
+            $wpdb->update(
+                $table,
+                array('order_index' => $order),
+                array('id' => $acta->id),
+                array('%d'),
+                array('%d')
+            );
+            $order++;
+        }
     }
     
     /**
