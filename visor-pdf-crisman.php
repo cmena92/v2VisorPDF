@@ -3,7 +3,7 @@
  * Plugin Name: Visor PDF Crisman
  * Plugin URI: https://github.com/cmena92/v2VisorPDF
  * Description: Sistema seguro para cargar, visualizar y controlar acceso a actas PDF con marcas de agua - CORREGIDO
- * Version: 2.1.9
+ * Version: 2.2.0
  * Author: Crisman
  * Author URI: https://tu-sitio-web.com
  * License: GPL v2 or later
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Definir constantes del plugin
-define('VISOR_PDF_CRISMAN_VERSION', '2.1.9');
+define('VISOR_PDF_CRISMAN_VERSION', '2.2.0');
 define('VISOR_PDF_CRISMAN_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('VISOR_PDF_CRISMAN_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -896,7 +896,7 @@ class VisorPDFCrisman {
     
     public function shortcode_actas_hybrid($atts) {
         $atts = shortcode_atts(array(
-            'carpeta' => '',
+            'carpeta' => '13', // Carpeta 2025 por defecto
             'limite' => 0,
             'mostrar_debug' => 'false'
         ), $atts);

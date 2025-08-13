@@ -52,7 +52,8 @@ $carpetas = $all_carpetas;
     <optgroup label="<?php echo esc_html($padre->name); ?>">
     <?php foreach ($carpetas_hijas[$padre->id] as $hija): ?>
         <?php if ($hija->actas_count > 0): ?>
-        <option value="<?php echo $hija->id; ?>" data-count="<?php echo $hija->actas_count; ?>">
+        <?php $selected = ($hija->id == 13) ? ' selected' : ''; ?>
+        <option value="<?php echo $hija->id; ?>" data-count="<?php echo $hija->actas_count; ?>"<?php echo $selected; ?>>
         <?php echo esc_html($hija->name); ?> (<?php echo $hija->actas_count; ?>)
 </option>
 <?php endif; ?>
@@ -61,7 +62,8 @@ $carpetas = $all_carpetas;
 <?php else: ?>
 <!-- Carpeta sin hijos - Seleccionable -->
     <?php if ($padre->actas_count > 0): ?>
-    <option value="<?php echo $padre->id; ?>" data-count="<?php echo $padre->actas_count; ?>">
+    <?php $selected = ($padre->id == 13) ? ' selected' : ''; ?>
+    <option value="<?php echo $padre->id; ?>" data-count="<?php echo $padre->actas_count; ?>"<?php echo $selected; ?>>
         <?php echo esc_html($padre->name); ?> (<?php echo $padre->actas_count; ?>)
 </option>
 <?php endif; ?>
