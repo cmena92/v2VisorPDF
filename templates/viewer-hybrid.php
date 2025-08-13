@@ -444,6 +444,7 @@ $carpetas = $all_carpetas;
 
 .acta-action-cell {
     text-align: center;
+    min-width: 90px;
 }
 
 .ver-acta-btn {
@@ -456,9 +457,31 @@ $carpetas = $all_carpetas;
     font-size: 12px;
     font-weight: 500;
     transition: background-color 0.2s;
+    display: inline-block;
+    min-width: 70px;
 }
 
 .ver-acta-btn:hover {
+    background: #0056b3;
+}
+
+/* Botón móvil - inicialmente oculto */
+.ver-acta-btn-mobile {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    display: none;
+    margin-top: 5px;
+    min-width: 60px;
+}
+
+.ver-acta-btn-mobile:hover {
     background: #0056b3;
 }
 
@@ -502,6 +525,15 @@ $carpetas = $all_carpetas;
 }
 
 /* Responsive */
+@media (max-width: 1024px) {
+    /* Para tablets: hacer más pequeño el botón pero mantenerlo visible */
+    .ver-acta-btn {
+        padding: 5px 10px;
+        font-size: 11px;
+        min-width: 65px;
+    }
+}
+
 @media (max-width: 768px) {
     .actas-header-simple {
         flex-direction: column;
@@ -538,9 +570,19 @@ $carpetas = $all_carpetas;
         font-size: 12px;
     }
     
+    /* Para móviles: mostrar el botón móvil y ocultar el de escritorio */
     .ver-acta-btn {
-        padding: 4px 8px;
-        font-size: 11px;
+        display: none;
+    }
+    
+    .ver-acta-btn-mobile {
+        display: inline-block;
+    }
+    
+    /* Ocultar columna de acción en móviles */
+    .actas-table th:last-child,
+    .actas-table td:last-child {
+        display: none;
     }
 }
 </style>
