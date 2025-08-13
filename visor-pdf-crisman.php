@@ -3,7 +3,7 @@
  * Plugin Name: Visor PDF Crisman
  * Plugin URI: https://github.com/cmena92/v2VisorPDF
  * Description: Sistema seguro para cargar, visualizar y controlar acceso a actas PDF con marcas de agua - CORREGIDO
- * Version: 2.2.0
+ * Version: 2.3.0
  * Author: Crisman
  * Author URI: https://tu-sitio-web.com
  * License: GPL v2 or later
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Definir constantes del plugin
-define('VISOR_PDF_CRISMAN_VERSION', '2.2.0');
+define('VISOR_PDF_CRISMAN_VERSION', '2.3.0');
 define('VISOR_PDF_CRISMAN_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('VISOR_PDF_CRISMAN_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -135,6 +135,7 @@ class VisorPDFCrisman {
         // Endpoints para reordenar actas
         add_action('wp_ajax_move_acta_up', array($this, 'ajax_move_acta_up'));
         add_action('wp_ajax_move_acta_down', array($this, 'ajax_move_acta_down'));
+        add_action('wp_ajax_update_acta_order', array($this, 'ajax_update_acta_order'));
         add_action('wp_ajax_force_migrate_order', array($this, 'ajax_force_migrate_order'));
         
         // Widget en dashboard
@@ -1711,6 +1712,59 @@ class VisorPDFCrisman {
                 array('%d')
             );
             $order++;
+        }
+    }
+    
+    /**
+     * AJAX: Actualizar order_index de una acta específica
+     */
+    public function ajax_update_acta_order() {
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Acceso denegado');
+        }
+        
+        if (!wp_verify_nonce($_POST['nonce'], 'actas_nonce')) {
+            wp_send_json_error('Error de seguridad');
+        }
+        
+        $acta_id = intval($_POST['acta_id']);
+        $new_order = intval($_POST['new_order']);
+        
+        // Validar parámetros
+        if ($acta_id <= 0 || $new_order <= 0) {
+            wp_send_json_error('Parámetros inválidos');
+        }
+        
+        global $wpdb;
+        $table = $wpdb->prefix . 'actas_metadata';
+        
+        // Verificar que la acta existe
+        $acta_exists = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM $table WHERE id = %d AND status = 'active'",
+            $acta_id
+        ));
+        
+        if (!$acta_exists) {
+            wp_send_json_error('Acta no encontrada');
+        }
+        
+        // Actualizar order_index (permite valores repetidos)
+        $result = $wpdb->update(
+            $table,
+            array('order_index' => $new_order),
+            array('id' => $acta_id),
+            array('%d'),
+            array('%d')
+        );
+        
+        if ($result !== false) {
+            wp_send_json_success(array(
+                'message' => 'Orden actualizado exitosamente',
+                'acta_id' => $acta_id,
+                'new_order' => $new_order
+            ));
+        } else {
+            wp_send_json_error('Error al actualizar la base de datos');
         }
     }
     

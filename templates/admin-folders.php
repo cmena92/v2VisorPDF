@@ -123,13 +123,21 @@ function render_folder_options($folders, $selected = null, $depth = 0, $prefix =
                                     <td><?php echo date('d/m/Y', strtotime($acta->upload_date)); ?></td>
                                     <td><?php echo $acta->total_pages; ?></td>
                                     <td class="acta-order">
-                                        <button class="button button-small btn-move-up" data-id="<?php echo $acta->id; ?>" data-folder="<?php echo $acta->folder_id ?: '0'; ?>" title="Subir">
-                                            <span class="dashicons dashicons-arrow-up-alt2"></span>
+                                        <span class="order-display"><?php echo intval($acta->order_index); ?></span>
+                                        <input type="number" class="order-edit" style="display:none;" 
+                                               value="<?php echo intval($acta->order_index); ?>" 
+                                               min="1" max="999" 
+                                               data-id="<?php echo $acta->id; ?>" 
+                                               data-folder="<?php echo $acta->folder_id ?: '0'; ?>">
+                                        <button class="button button-small btn-edit-order" data-id="<?php echo $acta->id; ?>" title="Editar orden">
+                                            <span class="dashicons dashicons-edit"></span>
                                         </button>
-                                        <button class="button button-small btn-move-down" data-id="<?php echo $acta->id; ?>" data-folder="<?php echo $acta->folder_id ?: '0'; ?>" title="Bajar">
-                                            <span class="dashicons dashicons-arrow-down-alt2"></span>
+                                        <button class="button button-small btn-save-order" data-id="<?php echo $acta->id; ?>" style="display:none;" title="Guardar">
+                                            <span class="dashicons dashicons-yes"></span>
                                         </button>
-                                        <span class="order-index"><?php echo intval($acta->order_index); ?></span>
+                                        <button class="button button-small btn-cancel-order" data-id="<?php echo $acta->id; ?>" style="display:none;" title="Cancelar">
+                                            <span class="dashicons dashicons-no"></span>
+                                        </button>
                                     </td>
                                     <td class="acta-actions">
                                         <button class="button button-small btn-rename-acta" data-id="<?php echo $acta->id; ?>" title="Renombrar">
@@ -418,72 +426,107 @@ jQuery(document).ready(function($) {
         }
     });
     
-    // Función para mover acta hacia arriba
-    $('.btn-move-up').on('click', function() {
+    // Función para editar orden - Mostrar campo de número
+    $('.btn-edit-order').on('click', function() {
         const actaId = $(this).data('id');
-        const folderId = $(this).data('folder');
-        const $button = $(this);
-        const $row = $button.closest('tr');
+        const $row = $(this).closest('tr');
+        const $orderCell = $row.find('.acta-order');
         
+        // Ocultar display y botón editar, mostrar input y botones guardar/cancelar
+        $orderCell.find('.order-display').hide();
+        $orderCell.find('.order-edit').show().focus().select();
+        
+        $(this).hide();
+        $row.find('.btn-save-order[data-id="' + actaId + '"]').show();
+        $row.find('.btn-cancel-order[data-id="' + actaId + '"]').show();
+    });
+    
+    // Función para cancelar edición de orden
+    $('.btn-cancel-order').on('click', function() {
+        const actaId = $(this).data('id');
+        const $row = $(this).closest('tr');
+        const $orderCell = $row.find('.acta-order');
+        
+        // Restaurar valor original
+        const originalValue = $orderCell.find('.order-display').text();
+        $orderCell.find('.order-edit').val(originalValue);
+        
+        // Restaurar estado original
+        $orderCell.find('.order-display').show();
+        $orderCell.find('.order-edit').hide();
+        
+        // Restaurar botones
+        $(this).hide();
+        $row.find('.btn-save-order[data-id="' + actaId + '"]').hide();
+        $row.find('.btn-edit-order[data-id="' + actaId + '"]').show();
+    });
+    
+    // Función para guardar nuevo orden
+    $('.btn-save-order').on('click', function() {
+        const actaId = $(this).data('id');
+        const $row = $(this).closest('tr');
+        const $orderInput = $row.find('.order-edit');
+        const folderId = $orderInput.data('folder');
+        const newOrder = parseInt($orderInput.val());
+        
+        // Validar que sea un número válido
+        if (isNaN(newOrder) || newOrder < 1) {
+            alert('Por favor ingrese un número válido mayor a 0');
+            return;
+        }
+        
+        const $button = $(this);
         $button.prop('disabled', true).html('<span class="dashicons dashicons-update spin"></span>');
         
         $.ajax({
             url: ajaxurl,
             type: 'POST',
             data: {
-                action: 'move_acta_up',
+                action: 'update_acta_order',
                 acta_id: actaId,
                 folder_id: folderId,
+                new_order: newOrder,
                 nonce: '<?php echo wp_create_nonce('actas_nonce'); ?>'
             },
             success: function(response) {
                 if (response.success) {
-                    // Recargar la página para ver el nuevo orden
-                    location.reload();
+                    // Actualizar display con nuevo valor
+                    $row.find('.order-display').text(newOrder);
+                    
+                    // Restaurar estado original
+                    $row.find('.order-display').show();
+                    $row.find('.order-edit').hide();
+                    
+                    // Restaurar botones
+                    $button.hide();
+                    $row.find('.btn-cancel-order[data-id="' + actaId + '"]').hide();
+                    $row.find('.btn-edit-order[data-id="' + actaId + '"]').show();
+                    
+                    // Mostrar mensaje de éxito
+                    alert('Orden actualizado exitosamente');
                 } else {
                     alert('Error: ' + response.data);
-                    $button.prop('disabled', false).html('<span class="dashicons dashicons-arrow-up-alt2"></span>');
+                    $button.prop('disabled', false).html('<span class="dashicons dashicons-yes"></span>');
                 }
             },
             error: function() {
                 alert('Error de conexión');
-                $button.prop('disabled', false).html('<span class="dashicons dashicons-arrow-up-alt2"></span>');
+                $button.prop('disabled', false).html('<span class="dashicons dashicons-yes"></span>');
             }
         });
     });
     
-    // Función para mover acta hacia abajo
-    $('.btn-move-down').on('click', function() {
-        const actaId = $(this).data('id');
-        const folderId = $(this).data('folder');
-        const $button = $(this);
-        const $row = $button.closest('tr');
-        
-        $button.prop('disabled', true).html('<span class="dashicons dashicons-update spin"></span>');
-        
-        $.ajax({
-            url: ajaxurl,
-            type: 'POST',
-            data: {
-                action: 'move_acta_down',
-                acta_id: actaId,
-                folder_id: folderId,
-                nonce: '<?php echo wp_create_nonce('actas_nonce'); ?>'
-            },
-            success: function(response) {
-                if (response.success) {
-                    // Recargar la página para ver el nuevo orden
-                    location.reload();
-                } else {
-                    alert('Error: ' + response.data);
-                    $button.prop('disabled', false).html('<span class="dashicons dashicons-arrow-down-alt2"></span>');
-                }
-            },
-            error: function() {
-                alert('Error de conexión');
-                $button.prop('disabled', false).html('<span class="dashicons dashicons-arrow-down-alt2"></span>');
-            }
-        });
+    // Permitir guardar con Enter en el campo de orden
+    $('.order-edit').on('keypress', function(e) {
+        if (e.which === 13) { // Enter
+            e.preventDefault();
+            const actaId = $(this).data('id');
+            $('.btn-save-order[data-id="' + actaId + '"]').click();
+        } else if (e.which === 27) { // ESC
+            e.preventDefault();
+            const actaId = $(this).data('id');
+            $('.btn-cancel-order[data-id="' + actaId + '"]').click();
+        }
     });
 });
 </script>
@@ -521,7 +564,7 @@ jQuery(document).ready(function($) {
 .acta-order {
     white-space: nowrap;
     text-align: center;
-    min-width: 120px;
+    min-width: 150px;
 }
 
 .acta-order .button-small {
@@ -530,16 +573,33 @@ jQuery(document).ready(function($) {
     vertical-align: middle;
 }
 
-.order-index {
+.order-display {
     display: inline-block;
-    margin-left: 8px;
-    padding: 2px 6px;
+    margin-right: 8px;
+    padding: 4px 8px;
     background: #f0f0f1;
     border-radius: 3px;
-    font-size: 11px;
+    font-size: 12px;
     color: #646970;
-    min-width: 20px;
+    font-weight: 600;
+    min-width: 30px;
     text-align: center;
+}
+
+.order-edit {
+    width: 60px;
+    padding: 3px 6px;
+    font-size: 12px;
+    text-align: center;
+    border: 1px solid #8c8f94;
+    border-radius: 3px;
+    margin-right: 5px;
+}
+
+.order-edit:focus {
+    border-color: #2271b1;
+    outline: none;
+    box-shadow: 0 0 0 1px #2271b1;
 }
 
 .btn-rename-acta:hover {
