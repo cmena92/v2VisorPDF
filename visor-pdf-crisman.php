@@ -3,7 +3,7 @@
  * Plugin Name: Visor PDF Crisman
  * Plugin URI: https://github.com/cmena92/v2VisorPDF
  * Description: Sistema seguro para cargar, visualizar y controlar acceso a actas PDF con marcas de agua - CORREGIDO
- * Version: 2.1.6
+ * Version: 2.1.7
  * Author: Crisman
  * Author URI: https://tu-sitio-web.com
  * License: GPL v2 or later
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Definir constantes del plugin
-define('VISOR_PDF_CRISMAN_VERSION', '2.1.6');
+define('VISOR_PDF_CRISMAN_VERSION', '2.1.7');
 define('VISOR_PDF_CRISMAN_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('VISOR_PDF_CRISMAN_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -234,6 +234,7 @@ class VisorPDFCrisman {
         $this->create_tables();
         $this->setup_default_folders();
         $this->upgrade_analytics_tables();
+        $this->migrate_existing_actas_order();
         flush_rewrite_rules();
     }
     
@@ -398,6 +399,7 @@ class VisorPDFCrisman {
         $this->create_tables();
         $this->setup_default_folders();
         $this->upgrade_analytics_tables();
+        $this->migrate_existing_actas_order();
         
         // Limpiar cachés
         $this->clear_plugin_caches();
@@ -440,6 +442,63 @@ class VisorPDFCrisman {
             if (method_exists($analytics, 'upgrade_tables_for_analytics')) {
                 $analytics->upgrade_tables_for_analytics();
             }
+        }
+    }
+    
+    /**
+     * Migrar actas existentes para asignar order_index inicial
+     */
+    private function migrate_existing_actas_order() {
+        global $wpdb;
+        $table = $wpdb->prefix . 'actas_metadata';
+        
+        // Verificar si ya existe la columna order_index
+        $columns = $wpdb->get_results("SHOW COLUMNS FROM $table LIKE 'order_index'");
+        if (empty($columns)) {
+            // Si no existe la columna, dbDelta la creará, no necesitamos hacer nada aquí
+            return;
+        }
+        
+        // Verificar si ya hay actas con order_index asignado
+        $has_ordered_actas = $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE order_index > 0");
+        if ($has_ordered_actas > 0) {
+            // Ya se ejecutó la migración anteriormente
+            return;
+        }
+        
+        // Obtener todas las actas activas agrupadas por carpeta
+        $actas_by_folder = $wpdb->get_results("
+            SELECT id, folder_id, upload_date 
+            FROM $table 
+            WHERE status = 'active' 
+            ORDER BY COALESCE(folder_id, 0), upload_date DESC
+        ");
+        
+        $current_folder = null;
+        $order_index = 1;
+        
+        foreach ($actas_by_folder as $acta) {
+            // Si cambiamos de carpeta, reiniciar el índice
+            if ($current_folder !== $acta->folder_id) {
+                $current_folder = $acta->folder_id;
+                $order_index = 1;
+            }
+            
+            // Asignar order_index basado en fecha de upload (más reciente = menor índice)
+            $wpdb->update(
+                $table,
+                array('order_index' => $order_index),
+                array('id' => $acta->id),
+                array('%d'),
+                array('%d')
+            );
+            
+            $order_index++;
+        }
+        
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            $total_migrated = count($actas_by_folder);
+            error_log("Visor PDF Crisman - Migradas $total_migrated actas con order_index inicial");
         }
     }
     
